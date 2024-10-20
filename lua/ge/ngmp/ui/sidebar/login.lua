@@ -15,15 +15,20 @@ local showLocked = true
 local function render(dt, windowWidth, windowHeight, indent)
   local style = im.GetStyle()
   local center = im.ImVec2(indent+windowWidth/2, windowHeight/2)
+  im.SetCursorPosX(center.x)
+  im.SetCursorPosY(center.y)
 
-  local sizeFac = ngmp_ui.getPercentVecX(3, false, true)/lock.size.x
-  local size = ngmp_ui.mulVec2Num(lock.size, sizeFac)
-  im.SetCursorPosX(center.x-size.x/2)
-  im.SetCursorPosY(center.y-size.y/2)
-  if showLocked and lock then
-    im.Image(lock.texId, size)
-  elseif unlock then
-    im.Image(unlock.texId, size)
+  if lock and unlock then
+    local sizeFac = ngmp_ui.getPercentVecX(4, false, true)/lock.size.x
+    local size = ngmp_ui.mulVec2Num(lock.size, sizeFac)
+    im.SetCursorPosX(im.GetCursorPosX()-size.x/2)
+    im.SetCursorPosY(im.GetCursorPosY()-size.y/2)
+
+    if showLocked then
+      im.Image(lock.texId, size)
+    else
+      im.Image(unlock.texId, size)
+    end
   end
 
   im.PushFont3("cairo_bold")
