@@ -14,14 +14,27 @@ local extensionYSmoother = newTemporalSigmoidSmoothing(20, 10)
 local extensionXSmoother = newTemporalSigmoidSmoothing(20, 10)
 local state = "closed"
 
+local arrowMovementTimer = 0
 local windowTargetWidthPercent = 15
 local extensionY = 0
 local extensionX = 0
-local arrowMovementTimer = 0
+
 local cursorVisibility = true
 local cursorVisible = true
 local cursorLocked = false
 
+-- if index is 0 that means no tab is open
+local function switchTab(index)
+  if tabs[currentTab] and tabs[currentTab].onDisable then
+    tabs[currentTab].onDisable()
+  end
+
+  currentTab = math.min(index, #tabs)
+
+  if tabs[currentTab] and tabs[currentTab].onEnable then
+    tabs[currentTab].onEnable()
+  end
+end
 
 local function drawArrow(drawlist, centerPos, sizeX, sizeY)
   im.ImDrawList_PathClear(drawlist)
@@ -34,32 +47,33 @@ end
 local function renderTabHeader(drawlist, pos3, pos4, windowWidth)
   -- A good bit of this code was written while drunk.
   -- It might not be very comprehensive, but it works.
-  if #tabs > 0 then
-    local width = windowWidth/#tabs
-    if im.BeginTable("Sidebar Tabs##NGMPUI", #tabs, im.TableFlags_SizingStretchSame, im.ImVec2(windowWidth, 0), float_inner_width) then
-      for i=1, #tabs do
-        im.TableNextColumn()
-        local name = tabs[i].name
-        local nameWidth = im.CalcTextSize(name).x
-        im.SetCursorPosX(im.GetCursorPosX()+width/2-nameWidth/2)
-        if currentTab == i then
-          im.Text(name)
-        else
-          im.TextColored(im.ImVec4(1,1,1,0.5), name)
-        end
+  if #tabs == 0 then return end
+  im.PushFont3("cairo_regular_medium")
+  local width = windowWidth/#tabs
+  if im.BeginTable("Sidebar Tabs##NGMPUI", #tabs, im.TableFlags_SizingStretchSame, im.ImVec2(windowWidth, 0)) then
+    for i=1, #tabs do
+      im.TableNextColumn()
+      local name = tabs[i].name
+      local nameWidth = im.CalcTextSize(name).x
+      im.SetCursorPosX(im.GetCursorPosX()+width/2-nameWidth/2)
+      if currentTab == i then
+        im.Text(name)
+      else
+        im.TextColored(im.ImVec4(1,1,1,0.5), name)
+      end
 
-        if im.IsItemHovered() then
-          im.SetMouseCursor(im.MouseCursor_Hand)
-          if im.IsMouseClicked(0) then
-            currentTab = i
-          end
+      if im.IsItemHovered() then
+        im.SetMouseCursor(im.MouseCursor_Hand)
+        if im.IsMouseClicked(0) then
+          switchTab(i)
         end
       end
-      im.EndTable()
     end
-    im.ImDrawList_AddLine(drawlist, im.ImVec2(pos3.x, pos3.y+im.GetCursorPosY()), im.ImVec2(pos4.x, pos3.y+im.GetCursorPosY()), im.GetColorU321(im.Col_Text, 0.75), ngmp_ui.uiscale*1)
-    im.Dummy(im.ImVec2(1,ngmp_ui.uiscale*2))
+    im.EndTable()
   end
+  im.ImDrawList_AddLine(drawlist, im.ImVec2(pos3.x, pos3.y+im.GetCursorPosY()-im.GetScrollY()), im.ImVec2(pos4.x, pos3.y+im.GetCursorPosY()-im.GetScrollY()), im.GetColorU321(im.Col_TabActive), ngmp_ui.uiscale*1)
+  im.Dummy(im.ImVec2(1,ngmp_ui.uiscale*2))
+  im.PopFont()
 end
 
 local function NGMPUI(dt)
@@ -67,10 +81,9 @@ local function NGMPUI(dt)
   local windowPos2 = ngmp_ui.getPercentVec(100, 95)
   local windowSize = ngmp_ui.subVec2(windowPos2, windowPos1)
 
-  im.StyleColorsClassic()
-  local style = im.GetStyle()
   im.PushStyleVar2(im.StyleVar_WindowPadding, im.ImVec2(0, 0))
 
+  local style = im.GetStyle()
   im.SetNextWindowPos(windowPos1)
   im.SetNextWindowSize(windowSize)
   im.Begin("Sidebar##NGMPUI", nil,
@@ -83,7 +96,8 @@ local function NGMPUI(dt)
     im.WindowFlags_NoTitleBar+
     im.WindowFlags_NoScrollbar+
     im.WindowFlags_NoBringToFrontOnFocus)
-  im.SetWindowFontScale(1)
+
+  im.PopStyleVar()
 
   local drawlist = im.GetBackgroundDrawList1()
   local pos = ngmp_ui.getPercentVec(99-extensionX, 45-extensionY)
@@ -97,7 +111,7 @@ local function NGMPUI(dt)
   -- Obviously it should still show up when the mouse is somewhere near it.
   local mouseNearArea = cursorVisible and im.GetMousePos().x > ngmp_ui.getPercentVecX(99-windowTargetWidthPercent)
   im.PushStyleVar1(im.StyleVar_Alpha, math.min(fadeSmoother:get((worldReadyState ~= 2 or state == "opening" or state == "open" or state == "closing" or (state == "closed" and mouseNearArea)) and 1 or 0, dt), 1))
-  im.ImDrawList_AddRectFilled(drawlist, pos, pos2, im.GetColorU321(im.Col_WindowBg), 10, im.ImDrawFlags_RoundCornersTopLeft+im.ImDrawFlags_RoundCornersBottomLeft)
+  im.ImDrawList_AddRectFilled(drawlist, pos, pos2, im.GetColorU321(im.Col_WindowBg, 0.75+extensionYSmoother.state*0.25), 10, im.ImDrawFlags_RoundCornersTopLeft+im.ImDrawFlags_RoundCornersBottomLeft)
 
   if state ~= "closed" then
     local pos3 = ngmp_ui.getPercentVec(100-extensionX, 5)
@@ -105,16 +119,19 @@ local function NGMPUI(dt)
     local pos4 = ngmp_ui.getPercentVec(100, 95)
     im.ImDrawList_AddRectFilled(drawlist, pos3, pos4, im.GetColorU321(im.Col_WindowBg), 15, im.ImDrawFlags_RoundCornersTopLeft+im.ImDrawFlags_RoundCornersBottomLeft)
 
-    im.SetCursorPosY(im.GetCursorPosY()+style.WindowPadding.y+style.ItemSpacing.y)
-    local indentX = pos2.x-pos.x+style.WindowPadding.x+style.ItemSpacing.x
+    im.SetCursorPosY(im.GetCursorPosY()+style.WindowPadding.y)
+    local indentX = pos2.x-pos.x+style.WindowPadding.x
     im.Indent(indentX)
     windowWidth = windowWidth - indentX
 
     renderTabHeader(drawlist, pos3, pos4, windowWidth)
 
+    im.SetWindowFontScale(1)
+    im.BeginChild1("Sidebar Content##NGMPUI", im.ImVec2(windowWidth - style.WindowPadding.x, windowHeight-im.GetCursorPosY()-5), false, im.WindowFlags_NoBackground+im.WindowFlags_NoScrollbar)
     if tabs[currentTab] then
-      tabs[currentTab].render(dt, windowWidth, windowHeight, indentX)
+      tabs[currentTab].render(dt)
     end
+    im.EndChild()
   end
 
   local onClickArea = im.IsMouseHoveringRect(pos, pos2)
@@ -133,8 +150,8 @@ local function NGMPUI(dt)
     local centerPos = ngmp_ui.getPercentVec(99.5-extensionX, 50)
     local animState = (extensionXSmoother.state-0.5)*-2
 
-    drawArrow(drawlist, ngmp_ui.addVec2(centerPos, im.ImVec2(math.sin(arrowMovementTimer)*ngmp_ui.uiscale+ngmp_ui.uiscale*3, 0)), animState*ngmp_ui.getPercentVecX(0.25, false, true), ngmp_ui.getPercentVecY(0.6, false, true))
-    drawArrow(drawlist, ngmp_ui.addVec2(centerPos, im.ImVec2(math.sin(arrowMovementTimer)*ngmp_ui.uiscale-ngmp_ui.uiscale*3, 0)), animState*ngmp_ui.getPercentVecX(0.25, false, true), ngmp_ui.getPercentVecY(0.6, false, true))
+    drawArrow(drawlist, ngmp_ui.addVec2(centerPos, im.ImVec2(math.sin(arrowMovementTimer)*ngmp_ui.uiscale + ngmp_ui.uiscale*3, 0)), animState*ngmp_ui.getPercentVecX(0.25, false, true), ngmp_ui.getPercentVecY(0.6, false, true))
+    drawArrow(drawlist, ngmp_ui.addVec2(centerPos, im.ImVec2(math.sin(arrowMovementTimer)*ngmp_ui.uiscale - ngmp_ui.uiscale*3, 0)), animState*ngmp_ui.getPercentVecX(0.25, false, true), ngmp_ui.getPercentVecY(0.6, false, true))
   end
 
   extensionXSmoother:get((state == "opening" or state == "open" or state == "fading") and 1 or 0, dt)
@@ -148,9 +165,6 @@ local function NGMPUI(dt)
 
   im.End()
   im.PopStyleVar()
-  im.PopStyleVar()
-
-  Engine.imgui.enableBeamNGStyle()
 end
 
 local function openTab(modulePath, openOnSpawn)
@@ -168,7 +182,7 @@ local function openTab(modulePath, openOnSpawn)
 
     tabs[#tabs+1] = module
     if openOnSpawn then
-      currentTab = #tabs
+      switchTab(#tabs)
     end
     return true
   end
@@ -176,16 +190,29 @@ local function openTab(modulePath, openOnSpawn)
 end
 
 local function closeTab(modulePath)
-  local index = arrayFindValueIndex(tabs, uiModules[modulePath:match("^.+/(.+)%.")])
+  local module = uiModules[modulePath:match("^.+/(.+)%.")]
+  if not module then return end
+  local index = arrayFindValueIndex(tabs, module)
   if index then
     table.remove(tabs, index)
-    currentTab = math.min(currentTab, #tabs)
+    if index < currentTab then
+      switchTab(math.min(currentTab-1, #tabs))
+    elseif #tabs == 0 then
+      switchTab(0)
+    end
+    if module.onClose then
+      module.onClose()
+    end
+    uiModules[modulePath:match("^.+/(.+)%.")] = nil
     return true
   end
   return false
 end
 
 local function onNGMPLogin()
+  closeTab("/lua/ge/ngmp/ui/sidebar/login.lua")
+  openTab("/lua/ge/ngmp/ui/sidebar/connect.lua", true)
+  openTab("/lua/ge/ngmp/ui/sidebar/settings.lua", false)
 end
 
 local function onExtensionLoaded()

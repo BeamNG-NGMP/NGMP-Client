@@ -12,17 +12,22 @@ local lock
 local unlock
 local showLocked = true
 
-local function render(dt, windowWidth, windowHeight, indent)
+local function render(dt)
   local style = im.GetStyle()
-  local center = im.ImVec2(indent+windowWidth/2, windowHeight/2)
+  local center = im.ImVec2(im.GetContentRegionAvailWidth()/2, im.GetContentRegionAvail().y/2)
   im.SetCursorPosX(center.x)
   im.SetCursorPosY(center.y)
+
+  im.PushFont3("cairo_bold")
+  local buttonSize = ngmp_ui.calculateButtonSize("Log in with Steam")
+  buttonSize.x = buttonSize.x + im.GetTextLineHeight()/2
+  im.PopFont()
 
   if lock and unlock then
     local sizeFac = ngmp_ui.getPercentVecX(4, false, true)/lock.size.x
     local size = ngmp_ui.mulVec2Num(lock.size, sizeFac)
     im.SetCursorPosX(im.GetCursorPosX()-size.x/2)
-    im.SetCursorPosY(im.GetCursorPosY()-size.y/2)
+    im.SetCursorPosY(im.GetCursorPosY()-size.y/2-buttonSize.y)
 
     if showLocked then
       im.Image(lock.texId, size)
@@ -32,10 +37,8 @@ local function render(dt, windowWidth, windowHeight, indent)
   end
 
   im.PushFont3("cairo_bold")
-  local textWidth = im.CalcTextSize("Log In with Steam").x
-  im.NewLine()
-  im.SetCursorPosX(center.x-textWidth/2-style.FramePadding.x*2-style.ItemSpacing.x/2)
-  if im.Button("Log In with Steam") then
+  im.SetCursorPosX(center.x-buttonSize.x/2)
+  if ngmp_ui.primaryButton("Log in with Steam", buttonSize) then
     showLocked = not showLocked
   end
   im.PopFont()
