@@ -1,7 +1,6 @@
 
-
 local M = {}
-M.dependencies = {"ui_imgui", "ngmp_ui"}
+M.dependencies = {"ngmp_main", "ui_imgui", "ngmp_ui"}
 
 local im = ui_imgui
 
@@ -76,7 +75,7 @@ local function renderTabHeader(drawlist, pos3, pos4, windowWidth)
   im.PopFont()
 end
 
-local function NGMPUI(dt)
+local function onNGMPUI(dt)
   local windowPos1 = ngmp_ui.getPercentVec(99-extensionX, 5)
   local windowPos2 = ngmp_ui.getPercentVec(100, 95)
   local windowSize = ngmp_ui.subVec2(windowPos2, windowPos1)
@@ -197,8 +196,8 @@ local function closeTab(modulePath)
     table.remove(tabs, index)
     if index < currentTab then
       switchTab(math.min(currentTab-1, #tabs))
-    elseif #tabs == 0 then
-      switchTab(0)
+    else
+      clamp(currentTab, 0, #tabs)
     end
     if module.onClose then
       module.onClose()
@@ -209,15 +208,33 @@ local function closeTab(modulePath)
   return false
 end
 
+local function openTabAddon(modulePath, openOnSpawn)
+  openTab("/lua/ge/ngmp/ui/sidebar/addon.lua", openOnSpawn)
+  if uiModules["addon"] then
+    uiModules["addon"].open(modulePath)
+  end
+end
+
+local function closeTabAddon(modulePath, openOnSpawn)
+  if uiModules["addon"] and uiModules["addon"].close(modulePath) then
+    closeTab("/lua/ge/ngmp/ui/sidebar/addon.lua")
+  end
+end
+
 local function onNGMPLogin()
   closeTab("/lua/ge/ngmp/ui/sidebar/login.lua")
   openTab("/lua/ge/ngmp/ui/sidebar/connect.lua", true)
   openTab("/lua/ge/ngmp/ui/sidebar/settings.lua", false)
 end
 
+local function onNGMPLauncherConnect()
+  closeTab("/lua/ge/ngmp/ui/sidebar/launcher.lua")
+  openTab("/lua/ge/ngmp/ui/sidebar/login.lua", true)
+end
+
 local function onExtensionLoaded()
   setExtensionUnloadMode(M, "manual")
-  openTab("/lua/ge/ngmp/ui/sidebar/login.lua", true)
+  openTab("/lua/ge/ngmp/ui/sidebar/launcher.lua", true)
 end
 
 local function onCursorVisibilityChanged(val)
@@ -233,12 +250,16 @@ end
 M.onMouseLocked = onMouseLocked
 M.onCursorVisibilityChanged = onCursorVisibilityChanged
 
-M.onExtensionLoaded = onExtensionLoaded
-M.NGMPUI = NGMPUI
+M.onNGMPUI = onNGMPUI
 M.onNGMPLogin = onNGMPLogin
+M.onNGMPLauncherConnect = onNGMPLauncherConnect
+M.onExtensionLoaded = onExtensionLoaded
 
 -- outside functions
 M.openTab = openTab
 M.closeTab = closeTab
+
+M.openTabAddon = openTabAddon
+M.closeTabAddon = closeTabAddon
 
 return M

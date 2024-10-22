@@ -1,7 +1,8 @@
 
+-- extension that dispatches ui calls and includes helper funcs
 local M = {}
 
-M.dependencies = {"ui_imgui"}
+M.dependencies = {"ngmp_main", "ui_imgui"}
 local C = ffi.C
 
 local style = rerequire("ngmp/ui/style")
@@ -85,34 +86,34 @@ local function getPercentVecY(input, useWindow, addPos)
 end
 
 local function primaryButton(string_label, ImVec2_size)
-    if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
-    if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
-    --C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
-    C.imgui_PushStyleColor1(im.Col_Button, M.bngCol32)
-    local retVal = C.imgui_Button(string_label, ImVec2_size)
-    C.imgui_PopStyleColor(1)
-    --C.imgui_PopStyleVar(1)
-    if C.imgui_IsItemHovered(0) then
-        C.imgui_SetMouseCursor(im.MouseCursor_Hand)
-    end
-    return retVal
+  if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
+  if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
+  C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
+  C.imgui_PushStyleColor1(im.Col_Button, M.bngCol32)
+  local retVal = C.imgui_Button(string_label, ImVec2_size)
+  C.imgui_PopStyleColor(1)
+  C.imgui_PopStyleVar(1)
+  if C.imgui_IsItemHovered(0) then
+    C.imgui_SetMouseCursor(im.MouseCursor_Hand)
+  end
+  return retVal
 end
 
 local function button(string_label, ImVec2_size)
-    if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
-    if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
-    C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
-    local retVal = C.imgui_Button(string_label, ImVec2_size)
-    C.imgui_PopStyleVar(1)
-    if C.imgui_IsItemHovered(0) then
-        C.imgui_SetMouseCursor(im.MouseCursor_Hand)
-    end
-    return retVal
+  if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
+  if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
+  C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
+  local retVal = C.imgui_Button(string_label, ImVec2_size)
+  C.imgui_PopStyleVar(1)
+  if C.imgui_IsItemHovered(0) then
+    C.imgui_SetMouseCursor(im.MouseCursor_Hand)
+  end
+  return retVal
 end
 
 local function calculateButtonSize(text)
-    local textSize = im.CalcTextSize(text or "")
-    return im.ImVec2(textSize.x+6, textSize.y+2)
+  local textSize = im.CalcTextSize(text or "")
+  return im.ImVec2(textSize.x+6, textSize.y+2)
 end
 --
 
@@ -126,7 +127,7 @@ local function onUpdate(dtReal, dtSim, dtRaw)
   imguiUtils.changeUIScale(M.uiscale)
 
   style.push()
-  local success, error = pcall(extensions.hook, "NGMPUI", dtReal, dtSim, dtRaw, mainSizePos)
+  local success, error = pcall(extensions.hook, "onNGMPUI", dtReal, dtSim, dtRaw, mainSizePos)
   if not success then
     log("E", "", error)
   end
@@ -139,6 +140,7 @@ local function onUpdate(dtReal, dtSim, dtRaw)
 end
 
 local function onExtensionLoaded()
+  setExtensionUnloadMode(M, "manual")
   local size = split(core_settings_graphic.selected_resolution, " ")
   mainSizePos[1] = im.ImVec2(tonumber(size[1]), tonumber(size[2]))
   mainSizePos[2] = im.GetMainViewport().Pos
