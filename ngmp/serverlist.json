@@ -28,7 +28,6 @@
       "americanroad": [663, "3fdeceeeaa81404939ff4ce0d6c59463e6defe293ebedcbcad1698ce7f84d885"]
     },
     "players": [
-      "Zeit",
       "moe lester",
       "the molester",
       "joe biden",
@@ -52,5 +51,15 @@
       "joe biden",
       "barack obama"
     ]
+  },
+  "127.0.0.4:34389": {
+    "level": "/levels/west_coast_usa/info.json",
+    "author": "Official",
+    "name": "Gamening 4 (shits empty)",
+    "description": "The worst server!",
+    "categories": ["Offroad"],
+    "max_players": 100,
+    "mods": {},
+    "players": []
   }
 }

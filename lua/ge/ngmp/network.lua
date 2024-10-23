@@ -102,6 +102,7 @@ local packetDecode = {
     local confirm_id = toUINT16(data:sub(1,2))
     local mapString = data:sub(3)
 
+    ngmp_levelMgr.loadLevel(mapString)
     return confirm_id
   end,
 }
@@ -117,7 +118,7 @@ local function sendPacket(packetType, ...)
   elseif packetEncode[packetType] then
     data = packetEncode[packetType](...)
   else
-    return false
+    data = generateConfirmID()
   end
 
   local len = ffi.string(ffi.new("uint32_t[1]", {#data}), 4)
