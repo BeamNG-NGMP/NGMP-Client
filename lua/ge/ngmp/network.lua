@@ -64,6 +64,7 @@ local packetDecode = {
     return confirm_id
   end,
   ["VC"] = function(data)
+    dump(data)
     local confirm_id = toUINT16(data:sub(1,2))
     local protocol_version = toUINT16(data:sub(3,4))
 
@@ -168,7 +169,9 @@ local function startConnection()
 end
 
 local function onReceive(data)
+  dump(data)
   local packetType = data:sub(1, 2)
+  dump(packetType)
 
   if packetType ~= "" and packetDecode[packetType] then
     local packetLength = 0
@@ -180,8 +183,10 @@ local function onReceive(data)
       ffi.copy(_packetLength, packetLengthRaw, 4)
       packetLength = _packetLength[0]
     end
+    dump(packetLength)
 
     local rawData = data:sub(7)
+    dump(rawData)
     if rawData:len() ~= packetLength then
       local confirmId = packetDecode[packetType](rawData)
       confirmIdCache[confirmId] = true
