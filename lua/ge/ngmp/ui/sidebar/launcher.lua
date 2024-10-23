@@ -44,7 +44,7 @@ local function render(dt)
   centerText("Looks like we can't connect to the launcher!", center.x)
 
   im.SetWindowFontScale(1)
-  if ngmp_network then
+  if ngmp_network and ngmp_network.connection.errType ~= "" then
     if feedbackExtensionSmoother:get(feedbackTargetSize, dt) >= 0.5 then
       im.SetCursorPosY(im.GetWindowHeight()-math.ceil(feedbackExtensionSmoother.state)-3)
       im.BeginChild1("ConnectionFeedback##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(feedbackExtensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
@@ -52,7 +52,8 @@ local function render(dt)
 
       im.PushFont3("consola_regular")
       im.SetWindowFontScale(0.8)
-      im.Text("Error Report:")
+      im.Text("Error Report")
+      im.Separator()
       im.SetWindowFontScale(0.75)
       im.Text(ngmp_network.connection.errType)
       im.Text("Error: "..ngmp_network.connection.err)
