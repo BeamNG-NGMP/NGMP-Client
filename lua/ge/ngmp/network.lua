@@ -14,6 +14,7 @@ M.connection = {
   ip = "127.0.0.1",
   clientPort = "42636",
   port = "42637",
+  serverPort = "42630",
   errType = "",
   err = "",
 }
@@ -44,11 +45,16 @@ local packetEncode = {
 
     return jsonEncode(raw)
   end,
-  ["HJ"] = function(ip_address)
-    return generateConfirmID(true)..ip_address
+  ["HJ"] = function(ip_address, port)
+    ip_address = ip_address == "" and "127.0.0.1" or M.connection.ip
+    port = port == "" and "42630" or M.connection.serverPort
+    return generateConfirmID(true)..ip_address..":"..port
   end,
-  ["ML"] = function(mods)
+  ["MR"] = function(mods)
     return generateConfirmID(true)..mods
+  end,
+  ["RL"] = function()
+    return generateConfirmID(true)
   end,
 }
 
@@ -92,19 +98,6 @@ local packetDecode = {
     end
     return jsonData.confirm_id or 0
   end,
-  ["ML"] = function(data)
-    local confirm_id = toUINT16(data:sub(1,2))
-
-    local modsHashes = split(data:sub(3), "/")
-    local mods = {}
-    for i=1, #modsHashes do
-      mods[i] = split(modsHashes, ":")
-    end
-    if data.mod_name then
-      ngmp_mods.verifyInstalledMods(mods)
-    end
-    return confirm_id
-  end,
   ["LM"] = function(data)
     local confirm_id = toUINT16(data:sub(1,2))
     local mapString = data:sub(3)
@@ -129,9 +122,7 @@ local function sendPacket(packetType, ...)
 
   local len = ffi.string(ffi.new("uint32_t[1]", {#data}), 4)
   wbp:send(packetType..len..data)
-  dump(#data, len)
-  dump(packetType)
-  dump(data)
+
   return true
 end
 
@@ -182,7 +173,6 @@ local function onReceive(data)
     end
 
     local rawData = data:sub(7)
-    dump(rawData)
     if rawData:len() == packetLength then
       local confirmId = packetDecode[packetType](rawData)
       confirmIdCache[confirmId] = true

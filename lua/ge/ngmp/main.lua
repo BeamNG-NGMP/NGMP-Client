@@ -2,16 +2,14 @@
 -- extension that loads all files and does the main state management
 local M = {}
 
+M.savePath = "/"
+M.clientVersion = 0
 M.protocolVersion = 0
+
 do -- meta stuff
-  M.clientVersion = tonumber(readFile("/ngmp/client_version.txt") or 0)
-  local f = io.open("/ngmp/client_version.txt", "r")
-  if f == nil then
-    M.clientVersion = 0
-  else
-    M.clientVersion = tonumber(f:read("l"))
-    f:close()
-  end
+  local iniData = loadIni("/ngmp/info.ini") or {}
+  M.clientVersion = iniData.client_version or M.clientVersion
+  M.savePath = iniData.save_path or M.savePath
 end
 
 local firstUpdate = false

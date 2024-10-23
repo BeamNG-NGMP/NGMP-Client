@@ -10,9 +10,6 @@ local cache = {}
 M.totalSize = 0
 M.totalSizeGB = 0
 
-local downloadList = {}
-local mountList = {}
-
 M.modDownloads = {}
 local downloadsFinished = 0
 
@@ -28,10 +25,7 @@ local function refreshCache()
     end
 
     local dir, name, ext = path.splitWithoutExt(cacheFiles[i])
-    cache[name] = {
-      fullpath = cacheFiles[i],
-      hash = hashStringSHA256(cacheFiles[i])
-    }
+    cache[name] = cacheFiles[i]
   end
   M.totalSize = totalSize
   M.totalSizeGB = totalSize/1000000000
@@ -55,52 +49,6 @@ local function updateDownloadState(modName, progress)
   end
 end
 
-local function verifyInstalledMods(mods)
-  refreshCache()
-
-  for i=1, #mods do
-    local mod = mods[i]
-    local modName = mod[1]
-
-    if arrayFindValueIndex(M.blackListedMods, modName) then
-      goto next
-    end
-
-    local modCached = cache[modName]
-    if modCached and modCached.hash == mod[2] then
-      mountList[#mountList+1] = modCached.fullpath
-      goto next
-    end
-
-    local dbEntry = core_modmanager.getModDB(modName)
-    if dbEntry and dbEntry.filename ~= "" and hashStringSHA256(dbEntry.filename) == mod[2] then
-      mountList[#mountList+1] = dbEntry.filename
-      goto next
-    end
-
-    downloadList[#downloadList+1] = {mod[1], mod[2]}
-
-    ::next::
-  end
-
-  local downloadListStr = ""
-  for i=1, #downloadList do
-    if i > 1 then
-      downloadListStr = downloadListStr.."/"
-    end
-    downloadListStr = downloadListStr..table.concat(downloadList[i], ":")
-
-    local dlModName = downloadList[i][1]
-    M.modDownloads[dlModName] = {
-      progress = 0,
-      fullpath = M.modsDir..dlModName,
-      targetHash = downloadList[i][2]
-    }
-  end
-
-  ngmp_network.sendPacket("ML", downloadListStr)
-end
-
 local function onExtensionLoaded()
   setExtensionUnloadMode(M, "manual")
 
@@ -108,7 +56,6 @@ local function onExtensionLoaded()
 end
 
 M.onExtensionLoaded = onExtensionLoaded
-M.verifyInstalledMods = verifyInstalledMods
 M.refreshCache = refreshCache
 M.updateDownloadState = updateDownloadState
 
