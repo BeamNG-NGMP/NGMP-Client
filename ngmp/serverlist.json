@@ -1,0 +1,56 @@
+{
+  "127.0.0.1:34589": {
+    "level": "/levels/gridmap_v2/info.json",
+    "author": "Official",
+    "name": "Gamening 1",
+    "description": "The single best server NGMP has ever seen! (It is the only one lol whoops)",
+    "categories": ["Racing"],
+    "max_players": 10,
+    "mods": {
+      "americanroad": [663, "3fdeceeeaa81404939ff4ce0d6c59463e6defe293ebedcbcad1698ce7f84d885"]
+    },
+    "players": [
+      "Zeit",
+      "moe lester",
+      "the molester",
+      "joe biden",
+      "barack obama"
+    ]
+  },
+  "127.0.0.2:34589": {
+    "level": "/levels/gridmap_v2/info.json",
+    "author": "Official",
+    "name": "Gamening 2",
+    "description": "The single best server NGMP has ever seen! (It is the only one lol whoops)",
+    "categories": ["Racing"],
+    "max_players": 10,
+    "mods": {
+      "americanroad": [663, "3fdeceeeaa81404939ff4ce0d6c59463e6defe293ebedcbcad1698ce7f84d885"]
+    },
+    "players": [
+      "Zeit",
+      "moe lester",
+      "the molester",
+      "joe biden",
+      "barack obama"
+    ]
+  },
+  "127.0.0.4:34589": {
+    "level": "/levels/utah/info.json",
+    "author": "Official",
+    "name": "Gamening 3 (UTAH!!)",
+    "description": "The single best server NGMP has ever seen! (It is the only one lol whoops)",
+    "categories": ["Racing"],
+    "max_players": 10,
+    "mods": {
+      "americanroad": [663, "3fdeceeeaa81404939ff4ce0d6c59463e6defe293ebedcbcad1698ce7f84d885"]
+    },
+    "players": [
+      "Zeit",
+      "moe lester",
+      "the molester",
+      "joe biden",
+      "barack obama"
+    ]
+  }
+}
