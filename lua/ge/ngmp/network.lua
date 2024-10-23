@@ -10,7 +10,12 @@ local wbp = socket.udp() -- water bucket protocol
 M.connection = {
   wbp = wbp,
   connected = false,
-  timeout = 0.01,
+  timeout = 0,
+  ip = "127.0.0.1",
+  clientPort = "42636",
+  port = "42637",
+  errType = "",
+  err = "",
 }
 
 local confirmIdCache = {}
@@ -39,9 +44,6 @@ local packetEncode = {
 
     return jsonEncode(raw)
   end,
-  ["LM"] = function(map_string)
-    return generateConfirmID(true)..map_string
-  end,
   ["HJ"] = function(ip_address)
     return generateConfirmID(true)..ip_address
   end,
@@ -50,57 +52,50 @@ local packetEncode = {
   end,
 }
 
-local packetDecode = {
-  ["CC"] = function(packetLength)
-    local _confirm_id = ffi.new("uint16_t[1]")
-    ffi.copy(_confirm_id, ffi.new("uint8_t[2]", wbp:receive(2)), 2)
-    local confirm_id = _confirm_id[0]
+local function toUINT16(bytes)
+  local uint = ffi.new("uint16_t[1]")
+  ffi.copy(uint, bytes, 2)
+  return uint[0]
+end
 
+local packetDecode = {
+  ["CC"] = function(data)
+    local confirm_id = toUINT16(data:sub(1,2))
     return confirm_id
   end,
-  ["VC"] = function(packetLength)
-    local _confirm_id = ffi.new("uint16_t[1]")
-    ffi.copy(_confirm_id, ffi.new("uint8_t[2]", wbp:receive(2)), 2)
-    local confirm_id = _confirm_id[0]
-
-    local _protocol_version = ffi.new("uint16_t[1]")
-    ffi.copy(_protocol_version, ffi.new("uint8_t[2]", wbp:receive(2)), 2)
-    local protocol_version = _protocol_version[0]
+  ["VC"] = function(data)
+    local confirm_id = toUINT16(data:sub(1,2))
+    local protocol_version = toUINT16(data:sub(3,4))
 
     ngmp_main.setBridgeConnected(true, protocol_version)
-    return confirm_id, protocol_version
+    return confirm_id
   end,
-  ["AI"] = function(packetLength)
-    local raw = wbp:receive(packetLength)
-    local success, data = pcall(jsonDecode, raw)
+  ["AI"] = function(data)
+    local success, jsonData = pcall(jsonDecode, data)
     if not success then
-      log("E", "", data)
-      data = {}
+      log("E", "", jsonData)
+      jsonData = {}
     end
 
-    ngmp_main.setLogin(data.success, data.player_name)
-    return data.confirm_id or 0, data
+    ngmp_main.setLogin(jsonData.success, jsonData.player_name)
+    return jsonData.confirm_id or 0
   end,
-  ["MP"] = function(packetLength)
-    local raw = wbp:receive(packetLength)
-    local success, data = pcall(jsonDecode, raw)
+  ["MP"] = function(data)
+    local success, jsonData = pcall(jsonDecode, data)
     if not success then
-      log("E", "", data)
-      data = {}
+      log("E", "", jsonData)
+      jsonData = {}
     end
 
-    if data.mod_name then
-      ngmp_mods.modDownloads[data.mod_name] = data.progress/100
+    if jsonData.mod_name then
+      ngmp_mods.modDownloads[jsonData.mod_name] = jsonData.progress/100
     end
-    return data.confirm_id or 0, data
+    return jsonData.confirm_id or 0
   end,
-  ["ML"] = function(packetLength)
-    local _confirm_id = ffi.new("uint16_t[1]")
-    ffi.copy(_confirm_id, ffi.new("uint8_t[2]", wbp:receive(2)), 2)
-    local confirm_id = _confirm_id[0]
+  ["ML"] = function(data)
+    local confirm_id = toUINT16(data:sub(1,2))
 
-    local raw = wbp:receive(packetLength-2)
-    local modsHashes = split(raw, "/")
+    local modsHashes = split(data:sub(3), "/")
     local mods = {}
     for i=1, #modsHashes do
       mods[i] = split(modsHashes, ":")
@@ -110,9 +105,17 @@ local packetDecode = {
     end
     return confirm_id
   end,
+  ["LM"] = function(data)
+    local confirm_id = toUINT16(data:sub(1,2))
+    local mapString = data:sub(3)
+
+    return confirm_id
+  end,
 }
 
 local function sendPacket(packetType, ...)
+  if not M.connection.connected then return end
+
   local args = {...}
   local data
   if args[1] and type(args[1]) == "table" then
@@ -125,38 +128,74 @@ local function sendPacket(packetType, ...)
   end
 
   local len = ffi.string(ffi.new("uint32_t[1]", {#data}), 4)
-  wbp:send(len..packetType..data)
+  wbp:send(packetType..len..data)
+  dump(#data, len)
+  dump(packetType)
+  dump(data)
   return true
 end
 
 local function startConnection()
+  if M.connection.connected then return end
+
   wbp:settimeout(M.connection.timeout)
 
-  wbp:setsockname("127.0.0.1", "42636")
-  wbp:setpeername("127.0.0.1", "42637")
+  do
+    local result, error = wbp:setsockname(M.connection.ip, M.connection.clientPort)
+    if error then
+      M.connection.errType = "Client"
+      M.connection.err = error
+      log("E", "startConnection", "Client socket init failed!")
+      log("E", "startConnection", error)
+      return false
+    end
+  end
+
+  do
+    local result, error = wbp:setpeername(M.connection.ip, M.connection.port)
+    if result then
+      M.connection.connected = true
+    elseif result then
+      M.connection.errType = "Launcher"
+      M.connection.err = error
+      log("E", "startConnection", "Launcher peer init failed!")
+      log("E", "startConnection", error)
+      return false
+    end
+  end
+
+  sendPacket("CI")
 end
 
-local function onUpdate(dt)
-  local packetLength = 0
-  local packetLengthRaw = wbp:receive(4)
+local function onReceive(data)
+  dump(data)
+  local packetType = data:sub(1, 2)
 
-  if packetLengthRaw then
+  if packetType ~= "" and packetDecode[packetType] then
+    local packetLength = 0
+    local packetLengthRaw = data:sub(3, 6)
     do
       -- convert to actual num
       -- this was for sure an experience
       local _packetLength = ffi.new("uint32_t[1]")
-      ffi.copy(_packetLength, ffi.new("uint8_t[4]", packetLengthRaw), 4)
+      ffi.copy(_packetLength, packetLengthRaw, 4)
       packetLength = _packetLength[0]
     end
 
-    local packetType = wbp:receive(2)
-    if packetDecode[packetType] then
-      local confirmId = packetDecode[packetType](packetLength)
+    local rawData = data:sub(7)
+    --if rawData:len() ~= packetLength then
+      local confirmId = packetDecode[packetType](rawData)
       confirmIdCache[confirmId] = true
-    else
-      -- clear
-      wbp:receive(packetLength)
-    end
+    --end
+  end
+end
+
+local function onUpdate(dt)
+  if not M.connection.connected then return end
+
+  local buf = wbp:receive()
+  if buf and buf ~= "" then
+    onReceive(buf)
   end
 end
 
@@ -164,8 +203,14 @@ local function onExtensionLoaded()
   setExtensionUnloadMode(M, "manual")
 end
 
+local function onExtensionUnloaded()
+  if not M.connection.connected then return end
+  wbp:close()
+end
+
 M.onUpdate = onUpdate
 M.onExtensionLoaded = onExtensionLoaded
+M.onExtensionUnloaded = onExtensionUnloaded
 
 -- output
 M.onNGMPInit = startConnection
