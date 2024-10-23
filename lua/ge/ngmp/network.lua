@@ -64,9 +64,10 @@ local packetDecode = {
     return confirm_id
   end,
   ["VC"] = function(data)
-    dump(data)
     local confirm_id = toUINT16(data:sub(1,2))
     local protocol_version = toUINT16(data:sub(3,4))
+    dump(confirm_id)
+    dump(protocol_version)
 
     ngmp_main.setBridgeConnected(protocol_version, true)
     return confirm_id
@@ -176,6 +177,7 @@ local function onReceive(data)
   if packetType ~= "" and packetDecode[packetType] then
     local packetLength = 0
     local packetLengthRaw = data:sub(3, 6)
+    dump(packetLengthRaw)
     do
       -- convert to actual num
       -- this was for sure an experience
@@ -187,7 +189,7 @@ local function onReceive(data)
 
     local rawData = data:sub(7)
     dump(rawData)
-    if rawData:len() ~= packetLength then
+    if rawData:len() == packetLength then
       local confirmId = packetDecode[packetType](rawData)
       confirmIdCache[confirmId] = true
     end
