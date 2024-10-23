@@ -38,7 +38,6 @@ local function setLogin(loggedIn, player)
 end
 
 local function setBridgeConnected(protocolVersion, bridgeConnected)
-  dump("Protocol Version: "..M.protocolVersion, bridgeConnected)
   M.isBridgeConnected = bridgeConnected or true
   M.protocolVersion = protocolVersion or M.protocolVersion
   extensions.hook("onNGMPLauncherConnect", M.isBridgeConnected)

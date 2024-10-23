@@ -66,8 +66,6 @@ local packetDecode = {
   ["VC"] = function(data)
     local confirm_id = toUINT16(data:sub(1,2))
     local protocol_version = toUINT16(data:sub(3,4))
-    dump(confirm_id)
-    dump(protocol_version)
 
     ngmp_main.setBridgeConnected(protocol_version, true)
     return confirm_id
@@ -170,14 +168,11 @@ local function startConnection()
 end
 
 local function onReceive(data)
-  dump(data)
   local packetType = data:sub(1, 2)
-  dump(packetType)
 
   if packetType ~= "" and packetDecode[packetType] then
     local packetLength = 0
     local packetLengthRaw = data:sub(3, 6)
-    dump(packetLengthRaw)
     do
       -- convert to actual num
       -- this was for sure an experience
@@ -185,7 +180,6 @@ local function onReceive(data)
       ffi.copy(_packetLength, packetLengthRaw, 4)
       packetLength = _packetLength[0]
     end
-    dump(packetLength)
 
     local rawData = data:sub(7)
     dump(rawData)
