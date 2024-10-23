@@ -109,6 +109,7 @@ local function onNGMPUI(dt)
   -- Hide this during gameplay to avoid obstructing the viewport.
   -- Obviously it should still show up when the mouse is somewhere near it.
   local mouseNearArea = cursorVisible and im.GetMousePos().x > ngmp_ui.getPercentVecX(99-windowTargetWidthPercent)
+
   im.PushStyleVar1(im.StyleVar_Alpha, math.min(fadeSmoother:get((worldReadyState ~= 2 or state == "opening" or state == "open" or state == "closing" or (state == "closed" and mouseNearArea)) and 1 or 0, dt), 1))
   im.ImDrawList_AddRectFilled(drawlist, pos, pos2, im.GetColorU321(im.Col_WindowBg, 0.75+extensionYSmoother.state*0.25), 10, im.ImDrawFlags_RoundCornersTopLeft+im.ImDrawFlags_RoundCornersBottomLeft)
 
@@ -131,6 +132,10 @@ local function onNGMPUI(dt)
       tabs[currentTab].render(dt)
     end
     im.EndChild()
+
+    if not mouseNearArea and im.IsMouseClicked(0) then
+      --state = "closing"
+    end
   end
 
   local onClickArea = im.IsMouseHoveringRect(pos, pos2)
@@ -184,6 +189,14 @@ local function openTab(modulePath, openOnSpawn)
       switchTab(#tabs)
     end
     return true
+  else
+    local index = arrayFindValueIndex(tabs, uiModules[moduleKey])
+    if index then
+      local module = rerequire(moduleName)
+      module.init()
+      uiModules[moduleKey] = module
+      tabs[index] = module
+    end
   end
   return false
 end
