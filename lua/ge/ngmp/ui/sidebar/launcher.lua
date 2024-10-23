@@ -9,6 +9,8 @@ local im = ui_imgui
 local imguiUtils = require("ui/imguiUtils")
 
 local router
+local feedbackTargetSize = 1
+local feedbackExtensionSmoother = newTemporalSigmoidSmoothing(950, 750)
 
 local function centerText(text, centerX)
   im.SetCursorPosX(centerX-im.CalcTextSize(text).x/2)
@@ -41,15 +43,30 @@ local function render(dt)
   im.SetWindowFontScale(0.9)
   centerText("Looks like we can't connect to the launcher!", center.x)
 
-  im.PushFont3("consola_regular")
+  im.SetWindowFontScale(1)
   if ngmp_network then
-    if ngmp_network.connection.errType ~= "" then
-      centerText(ngmp_network.connection.errType..":", center.x)
-      centerText(ngmp_network.connection.err, center.x)
+    if feedbackExtensionSmoother:get(feedbackTargetSize, dt) >= 0.5 then
+      im.SetCursorPosY(im.GetWindowHeight()-math.ceil(feedbackExtensionSmoother.state)-3)
+      im.BeginChild1("ConnectionFeedback##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(feedbackExtensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
+      im.Indent(style.WindowPadding.x)
+
+      im.PushFont3("consola_regular")
+      im.SetWindowFontScale(0.8)
+      im.Text("Error Report:")
+      im.SetWindowFontScale(0.75)
+      im.Text(ngmp_network.connection.errType)
+      im.Text("Error: "..ngmp_network.connection.err)
+      im.SetWindowFontScale(1)
+      im.PopFont()
+
+      if feedbackTargetSize ~= 0 then
+        feedbackTargetSize = im.GetCursorPosY()
+      end
+      im.EndChild()
+    else
+      im.Dummy(im.ImVec2(0,feedbackExtensionSmoother.state))
     end
   end
-  im.PopFont()
-  im.SetWindowFontScale(1)
 end
 
 local function init()
