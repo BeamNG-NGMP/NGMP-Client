@@ -67,7 +67,7 @@ local packetDecode = {
     local confirm_id = toUINT16(data:sub(1,2))
     local protocol_version = toUINT16(data:sub(3,4))
 
-    ngmp_main.setBridgeConnected(true, protocol_version)
+    ngmp_main.setBridgeConnected(protocol_version, true)
     return confirm_id
   end,
   ["AI"] = function(data)
@@ -143,9 +143,9 @@ local function startConnection()
   do
     local result, error = wbp:setsockname(M.connection.ip, M.connection.clientPort)
     if error then
-      M.connection.errType = "Client"
+      M.connection.errType = "Client socket init failed!"
       M.connection.err = error
-      log("E", "startConnection", "Client socket init failed!")
+      log("E", "startConnection", M.connection.errType)
       log("E", "startConnection", error)
       return false
     end
@@ -156,9 +156,9 @@ local function startConnection()
     if result then
       M.connection.connected = true
     elseif result then
-      M.connection.errType = "Launcher"
+      M.connection.errType = "Launcher peer init failed!"
       M.connection.err = error
-      log("E", "startConnection", "Launcher peer init failed!")
+      log("E", "startConnection", M.connection.errType)
       log("E", "startConnection", error)
       return false
     end
@@ -168,7 +168,6 @@ local function startConnection()
 end
 
 local function onReceive(data)
-  dump(data)
   local packetType = data:sub(1, 2)
 
   if packetType ~= "" and packetDecode[packetType] then
@@ -183,10 +182,10 @@ local function onReceive(data)
     end
 
     local rawData = data:sub(7)
-    --if rawData:len() ~= packetLength then
+    if rawData:len() ~= packetLength then
       local confirmId = packetDecode[packetType](rawData)
       confirmIdCache[confirmId] = true
-    --end
+    end
   end
 end
 
