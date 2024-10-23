@@ -10,6 +10,11 @@ local imguiUtils = require("ui/imguiUtils")
 
 local router
 
+local function centerText(text, centerX)
+  im.SetCursorPosX(centerX-im.CalcTextSize(text).x/2)
+  im.Text(text)
+end
+
 local function render(dt)
   local style = im.GetStyle()
   local center = im.ImVec2(im.GetContentRegionAvailWidth()/2, im.GetContentRegionAvail().y/2)
@@ -34,8 +39,16 @@ local function render(dt)
   end
 
   im.SetWindowFontScale(0.9)
-  im.SetCursorPosX(center.x-im.CalcTextSize("Looks like we can't connect to the launcher!").x/2)
-  im.Text("Looks like we can't connect to the launcher!")
+  centerText("Looks like we can't connect to the launcher!", center.x)
+
+  im.PushFont3("consola_regular")
+  if ngmp_network then
+    if ngmp_network.connection.errType ~= "" then
+      centerText(ngmp_network.connection.errType..":", center.x)
+      centerText(ngmp_network.connection.err, center.x)
+    end
+  end
+  im.PopFont()
   im.SetWindowFontScale(1)
 end
 
