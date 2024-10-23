@@ -9,11 +9,27 @@ local im = ui_imgui
 
 local tabs = {
   {
+    name = "Quality of Life",
+    render = function()
+      do
+        local boolPtr = im.BoolPtr(ngmp_settings.get("sidebar_closeOnLeftClickOutOfArea"))
+        im.PushFont3("cairo_bold")
+        if im.Checkbox("Close sidebar on click beside", boolPtr) then
+          ngmp_settings.set("sidebar_closeOnLeftClickOutOfArea", boolPtr[0])
+        end
+        im.PopFont()
+      end
+    end,
+    lastCursorPosY = 0,
+    targetSize = 1,
+    extensionSmoother = newTemporalSigmoidSmoothing(950, 750)
+  },
+  {
     name = "Mod Cache",
     render = function()
       im.Text(("Cache Size: %.1fGB"):format(ngmp_mods.totalSizeGB))
       im.PushFont3("cairo_bold")
-      ngmp_ui.primaryButton("Clear Cache", im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeightWithSpacing()*math.max(ngmp_mods.totalSizeGB, 1)))
+      ngmp_ui.primaryButton("Clear Cache", im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeightWithSpacing()*math.max(ngmp_mods.totalSizeGB or 1, 1)))
       im.PopFont()
     end,
     lastCursorPosY = 0,

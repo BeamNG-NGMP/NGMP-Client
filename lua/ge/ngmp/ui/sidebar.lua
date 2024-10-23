@@ -1,6 +1,6 @@
 
 local M = {}
-M.dependencies = {"ngmp_main", "ui_imgui", "ngmp_ui"}
+M.dependencies = {"ngmp_main", "ui_imgui", "ngmp_ui", "ngmp_settings"}
 
 local im = ui_imgui
 
@@ -133,8 +133,8 @@ local function onNGMPUI(dt)
     end
     im.EndChild()
 
-    if not mouseNearArea and im.IsMouseClicked(0) then
-      --state = "closing"
+    if ngmp_settings.getRaw("sidebar_closeOnLeftClickOutOfArea") and not mouseNearArea and im.IsMouseClicked(0) then
+      state = "closing"
     end
   end
 
