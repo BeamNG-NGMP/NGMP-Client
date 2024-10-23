@@ -33,11 +33,15 @@ style.Colors[im.Col_ButtonActive] = im.ImVec4(181/255, 181/255, 181/255, 0.8) --
 style.Colors[im.Col_SliderGrab] = im.ImVec4(124/255, 181/255, 220/255, 0.8) --rgb(124, 181, 220)
 style.Colors[im.Col_SliderGrabActive] = im.ImVec4(124/255, 181/255, 220/255, 0.8) --rgb(124, 181, 220)
 style.Colors[im.Col_CheckMark] = im.ImVec4(124/255, 181/255, 220/255, 0.8) --rgb(124, 181, 220)
-style.Colors[im.Col_Separator] = im.ImVec4(71/255, 76/255, 77/255, 1) --rgb(71, 76, 77)
+
 style.Colors[im.Col_ScrollbarBg] = im.ImVec4(36/255, 42/255, 46/255, 1) --rgb(36, 42, 46)
 style.Colors[im.Col_ScrollbarGrab] = im.ImVec4(86/255, 90/255, 93/255, 1) --#565a5d
 style.Colors[im.Col_SliderGrab] = im.ImVec4(86/255, 90/255, 93/255, 1) --#565a5d
 style.Colors[im.Col_FrameBg] = im.ImVec4(44/255, 46/255, 47/255, 1) --#2c2e2f
+
+style.Colors[im.Col_SeparatorActive] = im.ImVec4(255/255, 102/255, 0/255, 0.8) --rgb(255, 102, 0)
+style.Colors[im.Col_SeparatorHovered] = im.ImVec4(181/255, 181/255, 181/255, 0.7) --rgb(181, 181, 220)
+style.Colors[im.Col_Separator] = im.ImVec4(71/255, 76/255, 77/255, 1) --rgb(71, 76, 77)
 
 style.Colors[im.Col_TabActive] = im.ImVec4(255/255, 102/255, 0/255, 0.8) --rgb(255, 102, 0)
 style.Colors[im.Col_TabHovered] = im.ImVec4(181/255, 181/255, 181/255, 0.7) --rgb(181, 181, 220)
