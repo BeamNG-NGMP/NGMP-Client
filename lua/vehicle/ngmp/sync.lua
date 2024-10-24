@@ -17,6 +17,14 @@ local function onPhysicsStep(dtPhys)
     for i=1, #modules do
       data[modules[i].abbreviation] = modules[i].get()
     end
+
+    --modules
+    --for i=1, #modules do
+    --  local moduleData = data[modules[i].abbreviation]
+    --  if moduleData then
+    --    modules[i].set(moduleData)
+    --  end
+    --end
     print(string.len(lpack.encode(data)))
   end
 end

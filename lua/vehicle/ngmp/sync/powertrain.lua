@@ -25,6 +25,7 @@ local abbreviations = {
   rangeBox = "r",
   differential = "d",
 }
+local abbreviationsRev = require("ngmp/utils").switchKeysAndValues(abbreviations)
 
 local powertrainOverrides = {
   combustionEngine = function(device)
@@ -88,7 +89,7 @@ local function get()
       data[abbreviations[deviceType]..key] = func(device)
     end
   end
-  return data
+  return next(data) and data or nil
 end
 
 local powertrainSyncFuncsSet = {
@@ -103,15 +104,17 @@ local powertrainSyncFuncsSet = {
     device:setMode(data[1])
   end,
   differential = function(device, data)
-    device.mode = data[1]
-    device:selectUpdates()
+    device:setMode(data[1])
   end
 }
 
 local function set(data)
-  for deviceType, func in pairs(powertrainSyncFuncsSet) do
-    for _,device in ipairs(powertrain.getDevicesByType(deviceType)) do
-      func(device, data)
+  for deviceTypeAbbr, val in pairs(data) do
+    local deviceType = abbreviationsRev[deviceTypeAbbr]
+    if deviceType and powertrainSyncFuncsSet[deviceType] then
+      for _,device in ipairs(powertrain.getDevicesByType(deviceType)) do
+        powertrainSyncFuncsSet[deviceType](device, val)
+      end
     end
   end
 end

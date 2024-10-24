@@ -22,19 +22,18 @@ local function get()
     doubleToBytes(electrics.values.throttle),
     doubleToBytes(electrics.values.brake),
     doubleToBytes(electrics.values.clutch),
-    doubleToBytes(electrics.values.parkingbrake),
-    doubleToBytes(electrics.values.steering)
+    round(electrics.values.parkingbrake),
+    electrics.values.steering_input
   }
-
   return data
 end
 
 local function set(data)
   input.event("throttle", bytesToFloat(data[1]), 1)
   input.event("brake", bytesToFloat(data[2]), 2)
-  input.event("parkingbrake", bytesToFloat(data[3]), 2)
-  input.event("clutch", bytesToFloat(data[4]), 1)
-  input.event("steering", bytesToFloat(data[5]), 2, 0, 0)
+  input.event("clutch", bytesToFloat(data[3]), 1)
+  input.event("parkingbrake", data[4], 2)
+  input.event("steering", data[5], 2, 0, 0)
 end
 
 local function onExtensionLoaded()

@@ -186,6 +186,16 @@ local electricsIgnoreTbl = {
   -- 4wd
   modeRangeBox = true,
   mode4WD = true,
+
+  -- lightbar
+  lightbar_f = true,
+  lightbar_r = true,
+  lightbar_b = true,
+  lightbar_l = true,
+  flasher_f = true,
+  flasher_r = true,
+  display_police = true,
+  display_stop = true,
 }
 
 local abbreviations = {
@@ -201,15 +211,10 @@ local abbreviations = {
   engineRunning = 10,
   ignitionLevel = 11,
 }
+-- reverse
+local revAbbreviations = require("ngmp/utils").switchKeysAndValues(abbreviations)
 
 --[[what we actually care about:
-- lights_state
-- hazard_enabled
-- signal_right_input
-- signal_left_input
-- lightbar
-- horn
-
 - transbrake
 - shifters
 
@@ -237,7 +242,6 @@ local getData = {
 local function get()
   local ret = next(getData) and getData or nil
   getData = {}
-  dump(ret)
   return ret
 end
 
@@ -287,7 +291,89 @@ local function updateGFX()
   end
 end
 
-local function set(data)
+local applyFunctions = {
+  lights_state = function(value)
+    electrics.setLightsState(value)
+  end,
+  signal_left_input = function(value)
+    if electrics.values.signal_left_input ~= value then
+      electrics.signal_left_input()
+    end
+  end,
+  signal_right_input = function(value)
+    if electrics.values.signal_right_input ~= value then
+      electrics.toggle_right_signal()
+    end
+  end,
+  hazard_enabled = function(value)
+    electrics.set_warn_signal(value)
+  end,
+  horn = function(value)
+    electrics.horn(value==1)
+  end,
+  lightbar = function(value)
+    electrics.set_lightbar_signal(value)
+  end,
+  ignitionLevel = function(value, data)
+    if value == 0 then
+      controller.mainController.setEngineIgnition(false)
+    elseif value == 1 then
+      controller.mainController.setEngineIgnition(true)
+    elseif value >= 2 or data.engineRunning then
+      controller.mainController.setEngineIgnition(true)
+      controller.mainController.setStarter(true)
+    end
+  end,
+  engineRunning = function(value, data)
+    if value == 1 and data.ignitionLevel >= 2 then
+      controller.mainController.setEngineIgnition(true)
+      controller.mainController.setStarter(true)
+    end
+  end
+}
+
+local function getKeyBack(key)
+  return revAbbreviations[key] or key
+end
+
+local function set(rawData)
+  local data = {}
+  if rawData.n then
+    for k,v in pairs(rawData.n) do
+      if type(v) == "string" then
+        data[getKeyBack(k)] = bytesToFloat(v)
+      else
+        data[getKeyBack(k)] = v
+      end
+    end
+  end
+  if rawData.s then
+    for k,v in pairs(rawData.s) do
+      data[getKeyBack(k)] = v
+    end
+  end
+  if rawData.b then
+    for k,v in pairs(rawData.b) do
+      data[getKeyBack(k)] = (v == 1)
+    end
+  end
+  if rawData.t then
+    for k,v in pairs(rawData.t) do
+      data[getKeyBack(k)] = v
+    end
+  end
+
+  for key,val in pairs(data) do
+    if applyFunctions[key] then
+      applyFunctions[key](val, data)
+    else
+      electrics.values[key] = val
+    end
+  end
+end
+
+local function addGetApplyFunc(key, func)
+  applyFunctions[key] = func
 end
 
 local function onExtensionLoaded()
@@ -296,12 +382,23 @@ local function onExtensionLoaded()
     electricsIgnoreTbl[v.name.."_pressure_service"] = true
     electricsIgnoreTbl[v.name.."_pressure_parking"] = true
   end
+
+  for k,v in pairs(energyStorage.getStorages()) do
+    if v.type == "pressureTank" then
+      electricsIgnoreTbl[v.pressureElectricName] = true
+      electricsIgnoreTbl[v.pressureConsumerElectricName] = true
+      electricsIgnoreTbl[v.pressureConsumerCoefElectricName] = true
+      electricsIgnoreTbl[v.pneumaticPTOConsumerPressureElectricsName] = true
+      electricsIgnoreTbl[v.pneumaticPTOConsumerFlowElectricsName] = true
+    end
+  end
 end
 
 M.updateGFX = updateGFX
 M.set = set
 M.get = get
 M.onExtensionLoaded = onExtensionLoaded
+M.addGetApplyFunc = addGetApplyFunc
 
 M.doubleToBytes = doubleToBytes
 M.bytesToFloat = bytesToFloat

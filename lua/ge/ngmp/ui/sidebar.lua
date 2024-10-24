@@ -76,8 +76,8 @@ local function renderTabHeader(drawlist, pos3, pos4, windowWidth)
 end
 
 local function onNGMPUI(dt)
-  local windowPos1 = ngmp_ui.getPercentVec(99-extensionX, 5)
-  local windowPos2 = ngmp_ui.getPercentVec(100, 95)
+  local windowPos1 = ngmp_ui.getPercentVec(99-extensionX, state == "closed" and 25 or 5)
+  local windowPos2 = ngmp_ui.getPercentVec(100, state == "closed" and 75 or 95)
   local windowSize = ngmp_ui.subVec2(windowPos2, windowPos1)
 
   im.PushStyleVar2(im.StyleVar_WindowPadding, im.ImVec2(0, 0))
