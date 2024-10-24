@@ -1,6 +1,6 @@
 local M = {}
 
-local toml = require("ngmp/toml")
+local toml = require("ngmp/toml") -- https://github.com/jonstoler/lua-toml
 
 function M.readFile(filename)
   local f = io.open(filename, "r")
