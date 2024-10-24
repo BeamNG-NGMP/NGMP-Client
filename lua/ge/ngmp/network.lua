@@ -83,7 +83,7 @@ local packetDecode = {
       jsonData = {}
     end
 
-    ngmp_main.setLogin(jsonData.success, jsonData.player_name)
+    ngmp_main.setLogin(jsonData.success, jsonData.player_name, jsonData.steam_id)
     return jsonData.confirm_id or 0
   end,
   ["MP"] = function(data)
@@ -104,6 +104,16 @@ local packetDecode = {
 
     ngmp_levelMgr.loadLevel(mapString)
     return confirm_id
+  end,
+  ["PL"] = function(data)
+    local success, jsonData = pcall(jsonDecode, data)
+    if not success then
+      log("E", "", jsonData)
+      jsonData = {}
+    end
+
+    ngmp_vehicleMgr.spawnVehicle(jsonData)
+    return jsonData.confirm_id or 0
   end,
   ["VS"] = function(data)
     local success, jsonData = pcall(jsonDecode, data)

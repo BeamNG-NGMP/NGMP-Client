@@ -36,9 +36,10 @@ M.extensionLoadList = {
   "ngmp_ui_sidebar",
 }
 
-local function setLogin(loggedIn, player)
+local function setLogin(loggedIn, player, steam_id)
   M.isLoggedIn = loggedIn or false
   M.playerName = player or ""
+  M.steamId = steam_id or ""
   extensions.hook("onNGMPLogin", M.isLoggedIn, M.playerName)
 end
 
