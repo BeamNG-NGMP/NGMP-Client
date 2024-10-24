@@ -121,7 +121,7 @@ local function sendPacket(packetType, ...)
     data = generateConfirmID()
   end
 
-  local len = ffi.string(ffi.new("uint32_t[1]", {#data}), 4)
+  local len = ffi.string(ffi.new("uint32_t[1]", {data:len()}), 4)
   wbp:send(packetType..len..data)
 
   return true
