@@ -28,6 +28,8 @@ M.extensionLoadList = {
   "ngmp_mods",
   "ngmp_serverList",
 
+  "ngmp_levelMgr",
+
   -- ui goes last
   "ngmp_ui",
   "ngmp_ui_sidebar",
