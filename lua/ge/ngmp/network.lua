@@ -118,7 +118,7 @@ local function sendPacket(packetType, ...)
   elseif packetEncode[packetType] then
     data = packetEncode[packetType](...)
   else
-    data = generateConfirmID()
+    data = tostring(generateConfirmID())
   end
 
   local len = ffi.string(ffi.new("uint32_t[1]", {data:len()}), 4)
