@@ -77,13 +77,11 @@ end
 local function onNGMPJoinServer(ip)
   M.recents[ip] = os.time()
   jsonWriteFile(ngmp_main.savePath.."recents.json", M.recents, true)
-  dump(M.recents)
 end
 
 local function setFavorite(ip, bool)
   M.favorites[ip] = bool
   jsonWriteFile(ngmp_main.savePath.."favorites.json", M.favorites, true)
-  dump(M.favorites)
 end
 
 local function set(newList)
