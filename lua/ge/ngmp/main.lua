@@ -29,6 +29,7 @@ M.extensionLoadList = {
   "ngmp_serverList",
 
   "ngmp_levelMgr",
+  "ngmp_vehicleMgr",
 
   -- ui goes last
   "ngmp_ui",

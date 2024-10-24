@@ -105,6 +105,18 @@ local packetDecode = {
     ngmp_levelMgr.loadLevel(mapString)
     return confirm_id
   end,
+  ["VS"] = function(data)
+    local success, jsonData = pcall(jsonDecode, data)
+    if not success then
+      log("E", "", jsonData)
+      jsonData = {}
+    end
+
+    if jsonData.Jbeam then
+      ngmp_vehicleMgr.spawnVehicle(jsonData)
+    end
+    return jsonData.confirm_id or 0
+  end,
 }
 
 local function sendPacket(packetType, ...)
