@@ -1,3 +1,9 @@
 {
-  "sidebar_closeOnLeftClickOutOfArea": true
+  "ui": {
+    "sidebar": {
+      "closeOnLeftClickOutOfArea": true,
+      "directconnectIP": "127.0.0.1",
+      "directconnectPort": "42630"
+    }
+  }
 }

@@ -133,7 +133,7 @@ local function onNGMPUI(dt)
     end
     im.EndChild()
 
-    if ngmp_settings.getRaw("sidebar_closeOnLeftClickOutOfArea") and not mouseNearArea and im.IsMouseClicked(0) then
+    if ngmp_settings.get("closeOnLeftClickOutOfArea", nil, {"ui", "sidebar"}) and not mouseNearArea and im.IsMouseClicked(0) then
       state = "closing"
     end
   end

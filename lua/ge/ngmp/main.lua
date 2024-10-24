@@ -2,14 +2,17 @@
 -- extension that loads all files and does the main state management
 local M = {}
 
+M.toml = require("ngmp/tomlFile")
 M.savePath = "/"
 M.clientVersion = 0
 M.protocolVersion = 0
 
+local toml = M.toml
 do -- meta stuff
-  local iniData = loadIni("/ngmp/info.ini") or {}
-  M.clientVersion = iniData.client_version or M.clientVersion
-  M.savePath = iniData.save_path or M.savePath
+  local configData = toml.readFile("/ngmp/config.toml") or {}
+
+  M.clientVersion = configData.client_version or M.clientVersion
+  M.savePath = configData.save_path or M.savePath
 end
 
 local firstUpdate = false

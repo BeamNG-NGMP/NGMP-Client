@@ -58,7 +58,7 @@ local packetEncode = {
   end,
 }
 
-local function toUINT16(bytes)
+local function fromUINT16(bytes)
   local uint = ffi.new("uint16_t[1]")
   ffi.copy(uint, bytes, 2)
   return uint[0]
@@ -66,12 +66,12 @@ end
 
 local packetDecode = {
   ["CC"] = function(data)
-    local confirm_id = toUINT16(data:sub(1,2))
+    local confirm_id = fromUINT16(data:sub(1,2))
     return confirm_id
   end,
   ["VC"] = function(data)
-    local confirm_id = toUINT16(data:sub(1,2))
-    local protocol_version = toUINT16(data:sub(3,4))
+    local confirm_id = fromUINT16(data:sub(1,2))
+    local protocol_version = fromUINT16(data:sub(3,4))
 
     ngmp_main.setBridgeConnected(protocol_version, true)
     return confirm_id
@@ -99,7 +99,7 @@ local packetDecode = {
     return jsonData.confirm_id or 0
   end,
   ["LM"] = function(data)
-    local confirm_id = toUINT16(data:sub(1,2))
+    local confirm_id = fromUINT16(data:sub(1,2))
     local mapString = data:sub(3)
 
     ngmp_levelMgr.loadLevel(mapString)

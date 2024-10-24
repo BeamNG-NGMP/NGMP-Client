@@ -12,10 +12,10 @@ local tabs = {
     name = "Quality of Life",
     render = function()
       do
-        local boolPtr = im.BoolPtr(ngmp_settings.get("sidebar_closeOnLeftClickOutOfArea"))
+        local boolPtr = im.BoolPtr(ngmp_settings.get("closeOnLeftClickOutOfArea", nil, {"ui", "sidebar"}))
         im.PushFont3("cairo_bold")
         if im.Checkbox("Close sidebar on click beside", boolPtr) then
-          ngmp_settings.set("sidebar_closeOnLeftClickOutOfArea", boolPtr[0])
+          ngmp_settings.set("closeOnLeftClickOutOfArea", boolPtr[0], {"ui", "sidebar"})
         end
         im.PopFont()
       end

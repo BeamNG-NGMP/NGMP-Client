@@ -51,7 +51,9 @@ local function renderDirectConnect(dt)
     im.SameLine()
     im.SetNextItemWidth(im.GetContentRegionAvailWidth())
     local cursorPos = im.GetCursorPos()
-    im.InputText("##DirectConnectIP", directConnectIp, 128)
+    if im.InputText("##DirectConnectIP", directConnectIp, 128) then
+      ngmp_settings.set("directconnectIP", ffi.string(directConnectIp), {"ui", "sidebar"})
+    end
     if not im.IsItemActive() and directConnectIp[0] == 0 then
       local postCursorPos = im.GetCursorPos()
       im.SetCursorPosX(cursorPos.x+5)
@@ -66,7 +68,9 @@ local function renderDirectConnect(dt)
     im.SameLine()
     im.SetNextItemWidth(im.GetContentRegionAvailWidth())
     cursorPos = im.GetCursorPos()
-    im.InputText("##DirectConnectPort", directConnectPort, 128)
+    if im.InputText("##DirectConnectPort", directConnectPort, 128) then
+      ngmp_settings.set("directconnectPort", ffi.string(directConnectPort), {"ui", "sidebar"})
+    end
     if not im.IsItemActive() and directConnectPort[0] == 0 then
       local postCursorPos = im.GetCursorPos()
       im.SetCursorPosX(cursorPos.x+5)
@@ -357,6 +361,9 @@ local function init()
   star = FS:fileExists("/art/ngmpui/star_fill.png") and imguiUtils.texObj("/art/ngmpui/star_fill.png")
   unstar = FS:fileExists("/art/ngmpui/star.png") and imguiUtils.texObj("/art/ngmpui/star.png")
   no_server = FS:fileExists("/art/ngmpui/no_servers.png") and imguiUtils.texObj("/art/ngmpui/no_servers.png")
+
+  ffi.copy(directConnectIp, ngmp_settings.get("directconnectIP", nil, {"ui", "sidebar"}))
+  ffi.copy(directConnectPort, ngmp_settings.get("directconnectPort", nil, {"ui", "sidebar"}))
 end
 
 M.render = render
