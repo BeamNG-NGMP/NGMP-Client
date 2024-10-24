@@ -18,14 +18,16 @@ local function onPhysicsStep(dtPhys)
       data[modules[i].abbreviation] = modules[i].get()
     end
 
-    --modules
-    --for i=1, #modules do
-    --  local moduleData = data[modules[i].abbreviation]
-    --  if moduleData then
-    --    modules[i].set(moduleData)
-    --  end
-    --end
-    print(string.len(lpack.encode(data)))
+    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleData(%d, %q)", objectId, jsonEncode(data)))
+  end
+end
+
+local function set(data)
+  for i=1, #modules do
+    local moduleData = data[modules[i].abbreviation]
+    if moduleData then
+      modules[i].set(moduleData)
+    end
   end
 end
 
@@ -45,6 +47,7 @@ local function onExtensionLoaded()
   end
 end
 
+M.set = set
 M.onPhysicsStep = onPhysicsStep
 M.onExtensionLoaded = onExtensionLoaded
 

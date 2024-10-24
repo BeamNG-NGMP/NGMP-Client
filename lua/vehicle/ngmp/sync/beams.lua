@@ -11,13 +11,13 @@ local deformBeamCache = {}
 
 local function doubleToBytes(num)
   if not num then return end
-  return ffi.string(ffi.new("float[1]", num), 4)
+  return ffi.string(ffi.new("double[1]", num), 8)
 end
 
-local tmpFloat = ffi.new("float[1]")
-local function bytesToFloat(str)
-  ffi.copy(tmpFloat, str, 4)
-  return tmpFloat[0]
+local tmpDouble = ffi.new("double[1]")
+local function bytesToDouble(str)
+  ffi.copy(tmpDouble, str, 4)
+  return tmpDouble[0]
 end
 
 local function onBeamBroke(id, energy)
@@ -57,7 +57,24 @@ local function get()
   return insert and deformTbl or nil
 end
 
-local function set()
+local function set(data)
+  --local beam = v.data.beams[node]
+  --local beamPrecompression = beam.beamPrecompression or 1
+  --local deformLimit = type(beam.deformLimit) == 'number' and beam.deformLimit or math.huge
+  --obj:setBeam(-1, beam.id1, beam.id2, beam.beamStrength, beam.beamSpring,
+  --            beam.beamDamp, type(beam.dampCutoffHz) == 'number' and beam.dampCutoffHz or 0,
+  --            beam.beamDeform, deformLimit, type(beam.deformLimitExpansion) == 'number' and beam.deformLimitExpansion or deformLimit,
+  --            beamPrecompression
+  --)
+
+  --for id,ratio in pairs(data) do
+  --  if ratio == 0 then
+  --    obj:breakBeam(id)
+  --  else
+  --    --data
+  --    obj:setBeamLengthRefRatio(id, bytesToDouble(ratio))
+  --  end
+  --end
 end
 
 local function onReset()
