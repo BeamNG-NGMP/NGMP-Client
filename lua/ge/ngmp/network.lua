@@ -56,6 +56,9 @@ local packetEncode = {
   ["RL"] = function()
     return generateConfirmID(true)
   end,
+  ["VU"] = function(vehicleData)
+    return generateConfirmID(true)..vehicleData
+  end,
 }
 
 local function fromUINT16(bytes)
