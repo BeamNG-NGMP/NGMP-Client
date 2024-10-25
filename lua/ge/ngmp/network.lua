@@ -47,8 +47,8 @@ local packetEncode = {
     return jsonEncode(raw), confirm_id
   end,
   ["HJ"] = function(ip_address, port)
-    ip_address = ip_address == "" and "127.0.0.1" or ip_address
-    port = port == "" and "42630" or port
+    ip_address = ip_address and ip_address ~= "" and ip_address or M.connection.ip
+    port = port and port ~= "" and port or M.connection.serverPort
     local confirm_id, confirm_id_num = generateConfirmID(true)
     return confirm_id..ip_address..":"..port, confirm_id_num
   end,
@@ -93,7 +93,7 @@ local packetDecode = {
       jsonData = {}
     end
 
-    ngmp_main.setLogin(jsonData.success, jsonData.player_name, jsonData.steam_id)
+    ngmp_main.setLogin(jsonData.success, jsonData.player_name, jsonData.steam_id, jsonData.avatar_hash)
     return jsonData.confirm_id or 0
   end,
   ["MP"] = function(data)
@@ -122,7 +122,7 @@ local packetDecode = {
       jsonData = {}
     end
 
-    ngmp_vehicleMgr.spawnVehicle(jsonData)
+    ngmp_vehicleMgr.playerData = jsonData
     return 0
   end,
   ["VS"] = function(data)
@@ -251,6 +251,14 @@ local function onUpdate(dt)
   end
 end
 
+local function addPacketDecodeFunc(packetType, func)
+  packetDecode[packetType] = func
+end
+
+local function addPacketEncodeFunc(packetType, func)
+  packetEncode[packetType] = func
+end
+
 local function onExtensionLoaded()
   setExtensionUnloadMode(M, "manual")
 end
@@ -268,5 +276,8 @@ M.onExtensionUnloaded = onExtensionUnloaded
 M.retryConnection = retryConnection
 M.onNGMPInit = startConnection
 M.sendPacket = sendPacket
+
+M.addPacketDecodeFunc = addPacketDecodeFunc
+M.addPacketEncodeFunc = addPacketEncodeFunc
 
 return M

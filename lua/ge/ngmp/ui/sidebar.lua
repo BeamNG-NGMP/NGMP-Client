@@ -234,10 +234,12 @@ local function closeTabAddon(modulePath, openOnSpawn)
   end
 end
 
-local function onNGMPLogin()
-  closeTab("/lua/ge/ngmp/ui/sidebar/login.lua")
-  openTab("/lua/ge/ngmp/ui/sidebar/connect.lua", true)
-  openTab("/lua/ge/ngmp/ui/sidebar/settings.lua", false)
+local function onNGMPLogin(loggedIn)
+  if loggedIn then
+    closeTab("/lua/ge/ngmp/ui/sidebar/login.lua")
+    openTab("/lua/ge/ngmp/ui/sidebar/connect.lua", true)
+    openTab("/lua/ge/ngmp/ui/sidebar/settings.lua", false)
+  end
 end
 
 local function onNGMPLauncherConnect()

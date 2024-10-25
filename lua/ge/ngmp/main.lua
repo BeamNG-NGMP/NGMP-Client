@@ -18,6 +18,7 @@ end
 local firstUpdate = false
 M.isLoggedIn = false
 M.playerName = ""
+M.avatarHash = ""
 M.isBridgeConnected = false
 M.extensionLoadList = {
   -- network first
@@ -36,10 +37,11 @@ M.extensionLoadList = {
   "ngmp_ui_sidebar",
 }
 
-local function setLogin(loggedIn, player, steam_id)
+local function setLogin(loggedIn, player, steam_id, avatar_hash)
   M.isLoggedIn = loggedIn or false
   M.playerName = player or ""
   M.steamId = steam_id or ""
+  M.avatarHash = avatar_hash or ""
   extensions.hook("onNGMPLogin", M.isLoggedIn, M.playerName)
 end
 

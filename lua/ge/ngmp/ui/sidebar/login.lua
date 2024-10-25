@@ -20,7 +20,7 @@ local function render(dt)
 
   im.PushFont3("cairo_bold")
   local buttonSize = ngmp_ui.calculateButtonSize("Log in with Steam")
-  buttonSize.x = im.GetContentRegionAvailWidth()/2
+  buttonSize.x = center.x
   im.PopFont()
 
   if lock and unlock then

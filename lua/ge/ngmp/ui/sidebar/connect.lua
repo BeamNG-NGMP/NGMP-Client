@@ -358,7 +358,7 @@ end
 local function init()
   star = FS:fileExists("/art/ngmpui/star_fill.png") and imguiUtils.texObj("/art/ngmpui/star_fill.png")
   unstar = FS:fileExists("/art/ngmpui/star.png") and imguiUtils.texObj("/art/ngmpui/star.png")
-  no_server = FS:fileExists("/art/ngmpui/no_servers.png") and imguiUtils.texObj("/art/ngmpui/no_servers.png")
+  no_server = FS:fileExists("/art/ngmpui/tune.png") and imguiUtils.texObj("/art/ngmpui/tune.png")
 
   ffi.copy(directConnectIp, ngmp_settings.get("directconnectIP", nil, {"ui", "sidebar"}))
   ffi.copy(directConnectPort, ngmp_settings.get("directconnectPort", nil, {"ui", "sidebar"}))
