@@ -47,8 +47,8 @@ local packetEncode = {
     return jsonEncode(raw), confirm_id
   end,
   ["HJ"] = function(ip_address, port)
-    ip_address = ip_address == "" and "127.0.0.1" or M.connection.ip
-    port = port == "" and "42630" or M.connection.serverPort
+    ip_address = ip_address == "" and "127.0.0.1" or ip_address
+    port = port == "" and "42630" or port
     local confirm_id, confirm_id_num = generateConfirmID(true)
     return confirm_id..ip_address..":"..port, confirm_id_num
   end,
@@ -115,7 +115,7 @@ local packetDecode = {
     ngmp_levelMgr.loadLevel(mapString)
     return confirm_id
   end,
-  ["PL"] = function(data)
+  ["PD"] = function(data)
     local success, jsonData = pcall(jsonDecode, data)
     if not success then
       log("E", "", jsonData)
@@ -123,10 +123,11 @@ local packetDecode = {
     end
 
     ngmp_vehicleMgr.spawnVehicle(jsonData)
-    return jsonData.confirm_id or 0
+    return 0
   end,
   ["VS"] = function(data)
-    local success, jsonData = pcall(jsonDecode, data)
+    local confirm_id = fromUINT16(data:sub(1,2))
+    local success, jsonData = pcall(jsonDecode, data:sub(3))
     if not success then
       log("E", "", jsonData)
       jsonData = {}
@@ -135,7 +136,7 @@ local packetDecode = {
     if jsonData.Jbeam then
       ngmp_vehicleMgr.spawnVehicle(jsonData)
     end
-    return jsonData.confirm_id or 0
+    return confirm_id
   end,
   ["VA"] = function(data)
     local confirm_id = fromUINT16(data:sub(1,2))
@@ -166,9 +167,8 @@ local function sendPacket(packetType, ...)
   local data
   local confirmId
   if args[1] and type(args[1]) == "table" then
-    confirmId = generateConfirmID()
-    args[1].confirm_id = confirmId
-    data = jsonEncode(args[1]) or ""
+    confirmId = generateConfirmID(true)
+    data = confirmId..(jsonEncode(args[1]) or "")
   elseif packetEncode[packetType] then
     data, confirmId = packetEncode[packetType](...)
   else
@@ -211,6 +211,12 @@ local function startConnection()
     end
   end
 
+  sendPacket("CI")
+end
+
+local function retryConnection()
+  sendPacket("RL")
+  startConnection()
   sendPacket("CI")
 end
 
@@ -259,6 +265,7 @@ M.onExtensionLoaded = onExtensionLoaded
 M.onExtensionUnloaded = onExtensionUnloaded
 
 -- output
+M.retryConnection = retryConnection
 M.onNGMPInit = startConnection
 M.sendPacket = sendPacket
 

@@ -51,9 +51,7 @@ local function renderDirectConnect(dt)
     im.SameLine()
     im.SetNextItemWidth(im.GetContentRegionAvailWidth())
     local cursorPos = im.GetCursorPos()
-    if im.InputText("##DirectConnectIP", directConnectIp, 128) then
-      ngmp_settings.set("directconnectIP", ffi.string(directConnectIp), {"ui", "sidebar"})
-    end
+    im.InputText("##DirectConnectIP", directConnectIp, 128)
     if not im.IsItemActive() and directConnectIp[0] == 0 then
       local postCursorPos = im.GetCursorPos()
       im.SetCursorPosX(cursorPos.x+5)
@@ -68,9 +66,7 @@ local function renderDirectConnect(dt)
     im.SameLine()
     im.SetNextItemWidth(im.GetContentRegionAvailWidth())
     cursorPos = im.GetCursorPos()
-    if im.InputText("##DirectConnectPort", directConnectPort, 128) then
-      ngmp_settings.set("directconnectPort", ffi.string(directConnectPort), {"ui", "sidebar"})
-    end
+    im.InputText("##DirectConnectPort", directConnectPort, 128)
     if not im.IsItemActive() and directConnectPort[0] == 0 then
       local postCursorPos = im.GetCursorPos()
       im.SetCursorPosX(cursorPos.x+5)
@@ -89,6 +85,8 @@ local function renderDirectConnect(dt)
     im.Dummy(im.ImVec2(0,style.ItemSpacing.y))
     if ngmp_ui.primaryButton("Connect", im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeight()*2)) then
       ngmp_network.sendPacket("HJ", ffi.string(directConnectIp), ffi.string(directConnectPort))
+      ngmp_settings.set("directconnectIP", ffi.string(directConnectIp), {"ui", "sidebar"})
+      ngmp_settings.set("directconnectPort", ffi.string(directConnectPort), {"ui", "sidebar"})
     end
 
     im.Dummy(im.ImVec2(0,style.ItemSpacing.y))

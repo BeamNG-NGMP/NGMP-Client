@@ -42,6 +42,12 @@ local function render(dt)
 
   im.SetWindowFontScale(0.9)
   centerText("Looks like we can't connect to the launcher!", center.x)
+  im.NewLine()
+  local btnWidth = im.GetContentRegionAvailWidth()/2
+  im.SetCursorPosX(center.x-btnWidth/2)
+  if ngmp_ui.primaryButton("Retry", im.ImVec2(btnWidth, im.GetTextLineHeight()*1.5)) then
+    ngmp_network.retryConnection()
+  end
 
   im.SetWindowFontScale(1)
   if ngmp_network and ngmp_network.connection.errType ~= "" then

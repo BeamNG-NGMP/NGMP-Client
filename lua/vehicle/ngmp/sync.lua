@@ -20,7 +20,7 @@ local function onPhysicsStep(dtPhys)
     end
 
     data.vehId = M.vehId
-    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleData(%d, %q)", jsonEncode(data)))
+    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleData(%q, %q)", M.vehId, jsonEncode(data)))
   end
 end
 

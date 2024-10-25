@@ -20,7 +20,7 @@ local function render(dt)
 
   im.PushFont3("cairo_bold")
   local buttonSize = ngmp_ui.calculateButtonSize("Log in with Steam")
-  buttonSize.x = buttonSize.x + im.GetTextLineHeight()/2
+  buttonSize.x = im.GetContentRegionAvailWidth()/2
   im.PopFont()
 
   if lock and unlock then
@@ -39,6 +39,7 @@ local function render(dt)
   im.PushFont3("cairo_bold")
   im.SetCursorPosX(center.x-buttonSize.x/2)
   if ngmp_ui.primaryButton("Log in with Steam", buttonSize) then
+    ngmp_network.sendPacket("LR")
     showLocked = not showLocked
   end
   im.PopFont()
