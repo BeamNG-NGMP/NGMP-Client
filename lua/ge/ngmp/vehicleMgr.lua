@@ -7,31 +7,97 @@ M.vehsByVehId = {}
 M.vehsByObjId = {}
 M.vehs = {}
 
+local queue = {}
+local waitingForConfirm = {}
+
 local function onVehicleSpawned(vehId, veh)
-  ngmp_network.sendPacket("VS", {
+  waitingForConfirm[ngmp_network.sendPacket("VS", {
     Jbeam = veh.Jbeam,
     partConfig = veh.partConfig,
     paints = veh.paints,
     pos = veh:getPosition(),
     rot = veh:getRefNodeRotation(),
-  })
+    object_id = vehId
+  })] = vehId
 end
 
-local function setVehicleData(data)
-  if M.vehsByVehId[data.veh_id][1] then
-    M.vehsByVehId[data.veh_id][1]:queueLuaCommand("ngmp_sync.set(lpack.decode('"..lpack.encode(data).."'))")
+local function setVehicleOwnership(steam_id, veh_id, object_id)
+  local owner = M.owners[steam_id] or {}
+  local vehId = steam_id.."_"..veh_id
+  local veh = be:getObjectByID(object_id)
+  table.insert(owner, {
+    ownerId = steam_id,
+    vehName = veh:getName(),
+    vehId = vehId,
+    vehObjId = object_id,
+    veh = veh,
+  })
+
+  veh:queueLuaCommand(string.format([[
+    extensions.reload("ngmp_sync");
+    ngmp_sync.vehId = "%s"
+  ]], vehId))
+  M.owners[steam_id] = owner
+  M.vehsByVehId[vehId] = {
+    veh,
+    owner
+  }
+  M.vehsByObjId[object_id] = {
+    veh,
+    owner
+  }
+end
+
+local function confirmVehicle(confirm_id, veh_id, object_id)
+  if waitingForConfirm[confirm_id] == object_id then
+    local steamId = ngmp_main.steamId
+    local owner = M.owners[steamId] or {}
+    local vehId = steamId.."_"..veh_id
+    local veh = be:getObjectByID(object_id)
+    owner[veh_id] = {
+      ownerId = steamId,
+      vehName = veh:getName(),
+      vehId = vehId,
+      vehObjId = object_id,
+      veh = veh,
+    }
+
+    veh:queueLuaCommand(string.format([[
+      extensions.reload("ngmp_sync");
+      ngmp_sync.vehId = "%s"
+    ]], vehId))
+    M.owners[steamId] = owner
+    M.vehsByVehId[vehId] = {
+      veh,
+      owner
+    }
+    M.vehsByObjId[object_id] = {
+      veh,
+      owner
+    }
+
+    waitingForConfirm[confirm_id] = nil
   end
 end
 
-local function sendVehicleData(objectId, vehData)
-  if M.vehsByObjId[objectId] then
+local function setVehicleData(data)
+  local veh = M.vehsByVehId[data.steam_id.."_"..data.veh_id]
+  if veh then
+    veh[1]:queueLuaCommand(string.format("ngmp_sync.set(jsonDecode(%q))", data))
+  end
+end
+
+local function sendVehicleData(vehData)
+  local vehObj = M.vehsByVehId[vehData.vehId]
+  if vehObj then
     ngmp_network.sendPacket("VU", vehData)
   end
 end
 
 local function spawnVehicle(data)
-  local owner = M.owners[data.steam_id] or {}
-  local objName = "NGMP_Veh_"..data.veh_id
+  if data.steam_id == ngmp_main.steamId then return end
+  local vehId = data.steam_id.."_"..data.veh_id
+  local objName = "NGMP_"..vehId
 
   local veh = spawn.spawnVehicle(
     data.Jbeam,
@@ -41,30 +107,32 @@ local function spawnVehicle(data)
     {vehName = objName}
   )
   if not veh then return end
+  setVehicleOwnership(data.steam_id, data.veh_id, veh:getID())
+end
 
-  table.insert(owner, {
-    vehName = objName,
-    vehId = veh:getID(),
-    veh = veh,
-    ownerId = data.SteamID
-  })
+local function removeVehicle(veh_id, steam_id)
+  local owner = M.owners[steam_id] or {}
+  local vehId = steam_id.."_"..veh_id
+  local veh = M.vehsByVehId[vehId]
 
-  veh:queueLuaCommand("extensions.reload('ngmp_sync')")
-  M.owners[data.SteamID] = owner
-  M.vehsByVehId[data.veh_id] = {
-    veh,
-    owner
-  }
-  M.vehsByObjId[veh:getID()] = {
-    veh,
-    owner
-  }
+  veh:delete()
+
+  owner[veh_id] = nil
+  M.vehsByVehId[vehId] = nil
+  M.vehsByObjId[veh:getID()] = nil
+
+  M.owners[steam_id] = owner
 end
 
 M.sendVehicleData = sendVehicleData
-
 M.setVehicleData = setVehicleData
-M.onVehicleSpawned = onVehicleSpawned
+
+M.confirmVehicle = confirmVehicle
+M.setVehicleOwnership = setVehicleOwnership
+
+M.removeVehicle = removeVehicle
 M.spawnVehicle = spawnVehicle
+
+M.onVehicleSpawned = onVehicleSpawned
 
 return M

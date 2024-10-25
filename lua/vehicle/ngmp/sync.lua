@@ -2,6 +2,7 @@
 local M = {}
 
 local modulePath = "/lua/vehicle/ngmp/sync"
+M.vehId = ""
 M.modules = {}
 local modules = M.modules -- saves 1 table lookup
 
@@ -18,7 +19,8 @@ local function onPhysicsStep(dtPhys)
       data[modules[i].abbreviation] = modules[i].get()
     end
 
-    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleData(%d, %q)", objectId, jsonEncode(data)))
+    data.vehId = M.vehId
+    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleData(%d, %q)", jsonEncode(data)))
   end
 end
 

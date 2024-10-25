@@ -30,34 +30,41 @@ local function generateConfirmID(asString)
 
   confirmIdCache[confirm_id] = true
   if asString then
-    return ffi.string(ffi.new("uint16_t[1]", {confirm_id}), 2)
+    return ffi.string(ffi.new("uint16_t[1]", {confirm_id}), 2), confirm_id
   end
   return confirm_id
 end
 
 local packetEncode = {
   ["CI"] = function()
+    local confirm_id = generateConfirmID()
     local raw = {
-      confirm_id = generateConfirmID(),
+      confirm_id = confirm_id,
       userfolder = FS:getUserPath(), -- uses OS standard
       client_version = ngmp_main.clientVersion,
     }
 
-    return jsonEncode(raw)
+    return jsonEncode(raw), confirm_id
   end,
   ["HJ"] = function(ip_address, port)
     ip_address = ip_address == "" and "127.0.0.1" or M.connection.ip
     port = port == "" and "42630" or M.connection.serverPort
-    return generateConfirmID(true)..ip_address..":"..port
+    local confirm_id, confirm_id_num = generateConfirmID(true)
+    return confirm_id..ip_address..":"..port, confirm_id_num
   end,
   ["MR"] = function(mods)
-    return generateConfirmID(true)..mods
+    local confirm_id, confirm_id_num = generateConfirmID(true)
+    return confirm_id..mods, confirm_id_num
   end,
   ["RL"] = function()
-    return generateConfirmID(true)
+    local confirm_id, confirm_id_num = generateConfirmID(true)
+    return confirm_id, confirm_id_num
   end,
   ["VU"] = function(vehicleData)
-    return generateConfirmID(true)..vehicleData
+    return jsonEncode(vehicleData)
+  end,
+  ["VD"] = function(vehicleData)
+    return jsonEncode(vehicleData)
   end,
 }
 
@@ -130,6 +137,26 @@ local packetDecode = {
     end
     return jsonData.confirm_id or 0
   end,
+  ["VA"] = function(data)
+    local confirm_id = fromUINT16(data:sub(1,2))
+    local veh_id = fromUINT16(data:sub(3,4))
+
+    local object_id = ffi.new("uint64_t[1]")
+    ffi.copy(object_id, data:sub(5), 8)
+
+    ngmp_vehicleMgr.confirmVehicle(confirm_id, veh_id, object_id[0])
+    return confirm_id
+  end,
+  ["VR"] = function(data)
+    local confirm_id = fromUINT16(data:sub(1,2))
+    local veh_id = fromUINT16(data:sub(3,4))
+
+    local steam_id = ffi.new("uint64_t[1]")
+    ffi.copy(steam_id, data:sub(5), 8)
+
+    ngmp_vehicleMgr.removeVehicle(veh_id, steam_id)
+    return confirm_id
+  end,
 }
 
 local function sendPacket(packetType, ...)
@@ -137,19 +164,22 @@ local function sendPacket(packetType, ...)
 
   local args = {...}
   local data
+  local confirmId
   if args[1] and type(args[1]) == "table" then
-    args[1].confirm_id = generateConfirmID()
+    confirmId = generateConfirmID()
+    args[1].confirm_id = confirmId
     data = jsonEncode(args[1]) or ""
   elseif packetEncode[packetType] then
-    data = packetEncode[packetType](...)
+    data, confirmId = packetEncode[packetType](...)
   else
-    data = tostring(generateConfirmID(true))
+    local confirm_id, confirm_id_num = generateConfirmID(true)
+    data, confirmId = confirm_id, confirm_id_num
   end
 
   local len = ffi.string(ffi.new("uint32_t[1]", {#data}), 4)
   wbp:send(packetType..len..data)
 
-  return true
+  return confirmId
 end
 
 local function startConnection()
