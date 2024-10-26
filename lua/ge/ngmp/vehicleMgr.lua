@@ -17,7 +17,6 @@ local function onVehicleSpawned(vehId, veh)
   if FS:fileExists(veh.partConfig) then
     veh.partConfig = serialize(jsonReadFile(veh.partConfig)) or veh.partConfig
   end
-
   waitingForConfirm[ngmp_network.sendPacket("VS", {
     Jbeam = veh.Jbeam,
     partConfig = veh.partConfig,
@@ -26,6 +25,7 @@ local function onVehicleSpawned(vehId, veh)
     rot = quat(veh:getRotation()):toTable(),
     object_id = vehId
   })] = vehId
+  be:enterVehicle(0, be:getObjectByID(vehId))
 end
 
 local function setVehicleOwnership(steam_id, veh_id, object_id)
@@ -101,6 +101,13 @@ local function sendVehicleData(vehData)
   end
 end
 
+local function sendVehicleTransformData(vehData)
+  local vehObj = M.vehsByVehId[vehData.vehId]
+  if vehObj then
+    ngmp_network.sendPacket("VT", vehData)
+  end
+end
+
 local function spawnVehicle(data)
   if data.steam_id == ngmp_main.steamId then return end
   local vehId = data.steam_id.."_"..data.veh_id
@@ -118,6 +125,7 @@ local function spawnVehicle(data)
       paint = paintData[1],
       paint2 = paintData[2],
       paint3 = paintData[3],
+      autoEnterVehicle = false,
     }
   )
   if not veh then return end
@@ -139,6 +147,7 @@ local function removeVehicle(veh_id, steam_id)
   M.owners[steam_id] = owner
 end
 
+M.sendVehicleTransformData = sendVehicleTransformData
 M.sendVehicleData = sendVehicleData
 M.setVehicleData = setVehicleData
 

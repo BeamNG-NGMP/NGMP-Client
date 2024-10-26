@@ -34,6 +34,9 @@ local function set(data)
 end
 
 local function onExtensionLoaded()
+  enablePhysicsStepHook()
+
+  extensions.reload("ngmp_transformSync")
   for _,v in ipairs(FS:findFiles(modulePath, "*.lua", 0)) do
     local extName = v:match("^.+vehicle/(.+)%.lua"):gsub("/", "_")
     extensions.reload(extName)
@@ -42,10 +45,6 @@ local function onExtensionLoaded()
     if not ext.abbreviation then
       ext.abbreviation = ext.name
     end
-  end
-
-  if #modules > 1 then
-    enablePhysicsStepHook()
   end
 end
 

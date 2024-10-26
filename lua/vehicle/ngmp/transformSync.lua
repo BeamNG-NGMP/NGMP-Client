@@ -5,47 +5,27 @@ local M = {
   author = "DaddelZeit (NGMP Official)"
 }
 
-local function doubleToBytes(num)
-  if not num then return end
-  return ffi.string(ffi.new("double[1]", num), 8)
-end
+local step = 0
+local stepSize = 1/50
 
-local function doubleTableToBytes(tbl)
-  for i=1, #tbl do
-    tbl[i] = doubleToBytes(tbl[i])
-  end
-end
-
-local tmpDouble = ffi.new("double[1]")
-local function bytesToDouble(str)
-  ffi.copy(tmpDouble, str, 4)
-  return tmpDouble[0]
-end
-
-local function byteTableToDouble(tbl)
-  for i=1, #tbl do
-    tbl[i] = bytesToDouble(tbl[i])
-  end
-end
-
+local received
+local current
 local function get()
   -- this is the REF NODE TRANSFORM
   local transform = {
-    doubleTableToBytes(obj:getPosition():toTable()),
-    doubleTableToBytes({obj:getRotation()}),
-    doubleTableToBytes(obj:getVelocity():toTable()),
-    doubleTableToBytes({
+    obj:getPosition():toTable(),
+    {obj:getRotation()},
+    obj:getVelocity():toTable(),
+    {
       obj:getRollAngularVelocity(),
       obj:getPitchAngularVelocity(),
       obj:getYawAngularVelocity()
-    })
+    }
   }
 
   return transform
 end
 
-local received
-local current
 local function onPhysicsStep(dtPhys)
   current = {
     pos = obj:getPosition(),
@@ -61,14 +41,22 @@ local function onPhysicsStep(dtPhys)
   -- fortune telling is supposed to be done in launcher
 
   -- TODO: APPLY
+
+
+  step = step + dtPhys
+  if step > stepSize then
+    step = 0
+    current.vehId = ngmp_sync.vehId
+    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleData(%q, %q)", ngmp_sync.vehId, jsonEncode(get())))
+  end
 end
 
 local function set(data)
   received = {
-    pos = vec3(byteTableToDouble(data[1])),
-    rot = vec3(byteTableToDouble(data[1])),
-    vel = vec3(byteTableToDouble(data[1])),
-    velAng = vec3(byteTableToDouble(data[1]))
+    pos = vec3(data[1]),
+    rot = quat(data[2]),
+    vel = vec3(data[3]),
+    velAng = vec3(data[4])
   }
 end
 
