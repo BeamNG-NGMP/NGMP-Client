@@ -11,6 +11,10 @@ local queue = {}
 local waitingForConfirm = {}
 
 local function onVehicleSpawned(vehId, veh)
+  if FS:fileExists(veh.partConfig) then
+    veh.partConfig = readFile(veh.partConfig) or veh.partConfig
+  end
+
   waitingForConfirm[ngmp_network.sendPacket("VS", {
     Jbeam = veh.Jbeam,
     partConfig = veh.partConfig,
