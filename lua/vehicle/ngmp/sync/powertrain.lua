@@ -54,6 +54,7 @@ local powertrainSyncFuncsGet = {
       doubleToBytes(device.thermals.engineBlockTemperature),
       doubleToBytes(device.thermals.exhaustTemperature),
       doubleToBytes(device.thermals.coolantTemperature),
+      device.compressionBrakeCoefDesired > 0 and doubleToBytes(device.compressionBrakeCoefDesired) or nil,
     }
   end,
   -- should be handled in electrics
@@ -99,6 +100,11 @@ local powertrainSyncFuncsSet = {
     device.thermals.engineBlockTemperature = bytesToFloat(data[3])
     device.thermals.exhaustTemperature = bytesToFloat(data[4])
     device.thermals.coolantTemperature = bytesToFloat(data[5])
+
+    if device.compressionBrakeCoefDesired ~= device.NGMP_lastCompressionBrake then
+      device:setCompressionBrakeCoef(data[6] and bytesToFloat(data[6]) or 0)
+      device.NGMP_lastCompressionBrake = device.compressionBrakeCoefDesired
+    end
   end,
   rangeBox = function(device, data)
     device:setMode(data[1])

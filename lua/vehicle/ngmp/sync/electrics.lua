@@ -215,18 +215,11 @@ local abbreviations = {
 local revAbbreviations = require("ngmp/utils").switchKeysAndValues(abbreviations)
 
 --[[what we actually care about:
-- transbrake
-- shifters
-
 - gear  controller.mainController.shiftToGearIndex()
-- freezeState  controller.mainController.setFreeze()
 
-- engineRunning  controller.mainController.setStarter(true)
-- ignitionLevel  controller.mainController.setEngineIgnition(true)
-
-- the axle lift shit
 - compression brake
 - jato
+- the axle lift shit
 - pneumatics (PLEASE)
 ]]
 
@@ -329,7 +322,13 @@ local applyFunctions = {
       controller.mainController.setEngineIgnition(true)
       controller.mainController.setStarter(true)
     end
-  end
+  end,
+  transbrake = function(value)
+    controller.getControllerSafe("transbrake").setTransbrake(value)
+  end,
+  freezeState = function(value)
+    controller.mainController.setFreeze(value)
+  end,
 }
 
 local function getKeyBack(key)
