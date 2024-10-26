@@ -9,9 +9,10 @@ M.vehs = {}
 
 local queue = {}
 local waitingForConfirm = {}
+local dontSendSpawnInfo = {}
 
 local function onVehicleSpawned(vehId, veh)
-  if veh:getField("NGMP_SPAWN", 0) ~= "" then return end
+  if dontSendSpawnInfo[veh:getName()] then return end
 
   if FS:fileExists(veh.partConfig) then
     veh.partConfig = serialize(jsonReadFile(veh.partConfig)) or veh.partConfig
@@ -105,16 +106,16 @@ local function spawnVehicle(data)
   local vehId = data.steam_id.."_"..data.veh_id
   local objName = "NGMP_"..vehId
 
+  dontSendSpawnInfo[objName] = true
   local veh = spawn.spawnVehicle(
     data.Jbeam,
     data.partConfig,
     vec3(data.pos[1],data.pos[2],data.pos[3]),
     quat(data.rot[1],data.rot[2],data.rot[3],data.rot[4]),
-    {vehName = objName}
+    {vehicleName = objName}
   )
   if not veh then return end
 
-  veh:setField("NGMP_SPAWN", 0, "1")
   setVehicleOwnership(data.steam_id, data.veh_id, veh:getID())
 end
 
