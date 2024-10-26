@@ -2,7 +2,7 @@
 local M = {}
 
 local modulePath = "/lua/vehicle/ngmp/sync"
-M.vehId = ""
+M.vehFullId = ""
 M.modules = {}
 local modules = M.modules -- saves 1 table lookup
 
@@ -19,8 +19,7 @@ local function onPhysicsStep(dtPhys)
       data[modules[i].abbreviation] = modules[i].get()
     end
 
-    data.vehId = M.vehId
-    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleData(%q, %q)", M.vehId, jsonEncode(data)))
+    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleData(%q, %q)", M.vehFullId, jsonEncode(data)))
   end
 end
 
@@ -34,8 +33,6 @@ local function set(data)
 end
 
 local function onExtensionLoaded()
-  enablePhysicsStepHook()
-
   extensions.reload("ngmp_transformSync")
   for _,v in ipairs(FS:findFiles(modulePath, "*.lua", 0)) do
     local extName = v:match("^.+vehicle/(.+)%.lua"):gsub("/", "_")
@@ -46,6 +43,8 @@ local function onExtensionLoaded()
       ext.abbreviation = ext.name
     end
   end
+
+  enablePhysicsStepHook()
 end
 
 M.set = set

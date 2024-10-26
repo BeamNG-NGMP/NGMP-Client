@@ -62,8 +62,17 @@ local packetEncode = {
     local confirm_id, confirm_id_num = generateConfirmID(true)
     return confirm_id, confirm_id_num
   end,
-  ["VU"] = function(vehicleData)
-    return jsonEncode(vehicleData)
+  ["VU"] = function(ownerData, vehicleData)
+    local steamId = ffi.string(ffi.new("uint64_t[1]", {ownerData.ownerId}), 8)
+    local vehId = ffi.string(ffi.new("uint16_t[1]", {ownerData.vehId}), 2)
+
+    return steamId..vehId..jsonEncode(vehicleData)
+  end,
+  ["VT"] = function(ownerData, vehicleData)
+    local steamId = ffi.string(ffi.new("uint64_t[1]", {ownerData.ownerId}), 8)
+    local vehId = ffi.string(ffi.new("uint16_t[1]", {ownerData.vehId}), 2)
+
+    return steamId..vehId..jsonEncode(vehicleData)
   end,
   ["VD"] = function(vehicleData)
     return jsonEncode(vehicleData)
@@ -157,8 +166,34 @@ local packetDecode = {
     local steam_id = ffi.new("uint64_t[1]")
     ffi.copy(steam_id, data:sub(5), 8)
 
-    ngmp_vehicleMgr.removeVehicle(veh_id, steam_id)
+    ngmp_vehicleMgr.removeVehicle(veh_id, steam_id[0])
     return confirm_id
+  end,
+  ["VU"] = function(data)
+    local steam_id = ffi.new("uint64_t[1]")
+    ffi.copy(steam_id, data:sub(1,8), 8)
+    local veh_id = fromUINT16(data:sub(9,10))
+    local success, jsonData = pcall(jsonDecode, data:sub(11))
+    if not success then
+      log("E", "", jsonData)
+      jsonData = {}
+    end
+
+    ngmp_vehicleMgr.setVehicleData(steam_id[0].."_"..veh_id, jsonData)
+    return 0
+  end,
+  ["VT"] = function(data)
+    local steam_id = ffi.new("uint64_t[1]")
+    ffi.copy(steam_id, data:sub(1,8), 8)
+    local veh_id = fromUINT16(data:sub(9,10))
+    local success, jsonData = pcall(jsonDecode, data:sub(11))
+    if not success then
+      log("E", "", jsonData)
+      jsonData = {}
+    end
+
+    ngmp_vehicleMgr.setVehicleTransformData(steam_id[0].."_"..veh_id, jsonData)
+    return 0
   end,
 }
 
