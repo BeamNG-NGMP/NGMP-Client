@@ -2,6 +2,8 @@
 local M = {}
 M.dependencies = {"ngmp_main"}
 
+local http = require("socket/http")
+http.TIMEOUT = 0.1
 local MAX_CONFIRM_ID = 65535
 local MAX_CONFIRM_ID_ITERATION = 20000
 
@@ -122,7 +124,7 @@ local packetDecode = {
       jsonData = {}
     end
 
-    ngmp_vehicleMgr.playerData = jsonData
+    ngmp_playerData.set(jsonData)
     return 0
   end,
   ["VS"] = function(data)
@@ -251,6 +253,10 @@ local function onUpdate(dt)
   end
 end
 
+local function httpGet(url)
+  return http.request("http://127.0.0.1:4434/external/"..url)
+end
+
 local function addPacketDecodeFunc(packetType, func)
   packetDecode[packetType] = func
 end
@@ -276,6 +282,8 @@ M.onExtensionUnloaded = onExtensionUnloaded
 M.retryConnection = retryConnection
 M.onNGMPInit = startConnection
 M.sendPacket = sendPacket
+
+M.httpGet = httpGet
 
 M.addPacketDecodeFunc = addPacketDecodeFunc
 M.addPacketEncodeFunc = addPacketEncodeFunc

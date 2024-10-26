@@ -27,6 +27,7 @@ M.extensionLoadList = {
   -- then the helper stuff...
   "ngmp_settings",
   "ngmp_mods",
+  "ngmp_playerData",
   "ngmp_serverList",
 
   "ngmp_levelMgr",
