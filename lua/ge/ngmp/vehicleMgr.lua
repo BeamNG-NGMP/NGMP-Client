@@ -23,7 +23,7 @@ local function onVehicleSpawned(vehId, veh)
     partConfig = veh.partConfig,
     paints = veh.paints,
     pos = veh:getPosition():toTable(),
-    rot = quat(veh:getRotation()):inversed():toTable(),
+    rot = quat(veh:getRotation()):toTable(),
     object_id = vehId
   })] = vehId
 end
@@ -107,12 +107,18 @@ local function spawnVehicle(data)
   local objName = "NGMP_"..vehId
 
   dontSendSpawnInfo[objName] = true
+  local paintData = deserialize(data.paints)
   local veh = spawn.spawnVehicle(
     data.Jbeam,
     data.partConfig,
     vec3(data.pos[1],data.pos[2],data.pos[3]),
-    quat(data.rot[1],data.rot[2],data.rot[3],data.rot[4]),
-    {vehicleName = objName}
+    quat(data.rot[1],data.rot[2],data.rot[3],data.rot[4]):inversed(),
+    {
+      vehicleName = objName,
+      paint = paintData[1],
+      paint2 = paintData[2],
+      paint3 = paintData[3],
+    }
   )
   if not veh then return end
 
