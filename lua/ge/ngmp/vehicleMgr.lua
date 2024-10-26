@@ -11,16 +11,18 @@ local queue = {}
 local waitingForConfirm = {}
 
 local function onVehicleSpawned(vehId, veh)
+  if veh:getField("NGMP_SPAWN", 0) ~= "" then return end
+
   if FS:fileExists(veh.partConfig) then
-    veh.partConfig = readFile(veh.partConfig) or veh.partConfig
+    veh.partConfig = serialize(jsonReadFile(veh.partConfig)) or veh.partConfig
   end
 
   waitingForConfirm[ngmp_network.sendPacket("VS", {
     Jbeam = veh.Jbeam,
     partConfig = veh.partConfig,
     paints = veh.paints,
-    pos = veh:getPosition(),
-    rot = veh:getRefNodeRotation(),
+    pos = veh:getPosition():toTable(),
+    rot = quat(veh:getRotation()):toTable(),
     object_id = vehId
   })] = vehId
 end
@@ -106,11 +108,13 @@ local function spawnVehicle(data)
   local veh = spawn.spawnVehicle(
     data.Jbeam,
     data.partConfig,
-    vec3(data.pos.x,data.pos.y,data.pos.z),
-    quat(data.rot.x,data.rot.y,data.rot.z,data.rot.w),
+    vec3(data.pos[1],data.pos[2],data.pos[3]),
+    quat(data.rot[1],data.rot[2],data.rot[3],data.rot[4]),
     {vehName = objName}
   )
   if not veh then return end
+
+  veh:setField("NGMP_SPAWN", 0, 1)
   setVehicleOwnership(data.steam_id, data.veh_id, veh:getID())
 end
 
