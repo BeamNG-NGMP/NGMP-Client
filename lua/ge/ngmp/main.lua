@@ -16,10 +16,10 @@ do -- meta stuff
 end
 
 local firstUpdate = false
-M.isLoggedIn = false
-M.playerName = ""
-M.avatarHash = ""
+
 M.isBridgeConnected = false
+M.isLoggedIn = false
+
 M.extensionLoadList = {
   -- network first
   "ngmp_network",
@@ -40,10 +40,10 @@ M.extensionLoadList = {
 
 local function setLogin(loggedIn, player, steam_id, avatar_hash)
   M.isLoggedIn = loggedIn or false
-  M.playerName = player or ""
-  M.steamId = steam_id or ""
-  M.avatarHash = avatar_hash or ""
-  extensions.hook("onNGMPLogin", M.isLoggedIn, M.playerName)
+  local playerName = player or ""
+  local steamId = steam_id or ""
+  local avatarHash = avatar_hash or ""
+  extensions.hook("onNGMPLogin", M.isLoggedIn, playerName, steamId, avatarHash)
 end
 
 local function setBridgeConnected(protocolVersion, bridgeConnected)
