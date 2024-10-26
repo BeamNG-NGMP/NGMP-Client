@@ -11,7 +11,7 @@ local queue = {}
 local waitingForConfirm = {}
 local dontSendSpawnInfo = {}
 
-local function onVehicleSpawned(vehFullId, veh)
+local function onVehicleSpawned(objectId, veh)
   if dontSendSpawnInfo[veh:getName()] then return end
 
   if FS:fileExists(veh.partConfig) then
@@ -23,9 +23,9 @@ local function onVehicleSpawned(vehFullId, veh)
     paints = veh.paints,
     pos = veh:getPosition():toTable(),
     rot = quat(veh:getRotation()):toTable(),
-    object_id = vehFullId
-  })] = vehFullId
-  be:enterVehicle(0, be:getObjectByID(vehFullId))
+    object_id = objectId
+  })] = objectId
+  be:enterVehicle(0, veh)
 end
 
 local function setVehicleOwnership(steam_id, veh_id, object_id)
@@ -57,6 +57,7 @@ local function setVehicleOwnership(steam_id, veh_id, object_id)
 end
 
 local function confirmVehicle(confirm_id, veh_id, object_id)
+  dump(waitingForConfirm[confirm_id], object_id)
   if waitingForConfirm[confirm_id] == object_id then
     local steamId = ngmp_main.steamId
     local owner = M.owners[steamId] or {}
