@@ -5,7 +5,7 @@ local M = {
   author = "DaddelZeit (NGMP Official)"
 }
 
-M.debugDraw = false
+M.debugDraw = true
 
 M.applyForce = 10
 M.applyForceAng = 37.5
@@ -86,6 +86,7 @@ local function updateGFX(dt)
   if not received then return end
   if M.debugDraw then
     drawDebug()
+    return
   end
 
   local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
