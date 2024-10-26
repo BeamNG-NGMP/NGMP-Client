@@ -112,7 +112,7 @@ local function spawnVehicle(data)
     data.Jbeam,
     data.partConfig,
     vec3(data.pos[1],data.pos[2],data.pos[3]),
-    quat(data.rot[1],data.rot[2],data.rot[3],data.rot[4]):inversed(),
+    quat(data.rot[1],data.rot[2],data.rot[3],data.rot[4]),
     {
       vehicleName = objName,
       paint = paintData[1],
