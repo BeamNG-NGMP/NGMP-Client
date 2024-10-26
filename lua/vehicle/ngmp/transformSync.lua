@@ -46,7 +46,7 @@ local function onPhysicsStep(dtPhys)
   step = step + dtPhys
   if step > stepSize then
     step = 0
-    obj:queueGameEngineLua(string.format("ngmp_vehicleMgr.sendVehicleTransformData(%q, %q)", ngmp_sync.vehFullId, jsonEncode(get())))
+    obj:queueGameEngineLua(string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleTransformData(%q, %q) end", ngmp_sync.vehFullId, jsonEncode(get())))
   end
 end
 
