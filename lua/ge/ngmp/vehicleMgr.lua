@@ -22,7 +22,7 @@ local function onVehicleSpawned(vehId, veh)
     partConfig = veh.partConfig,
     paints = veh.paints,
     pos = veh:getPosition():toTable(),
-    rot = quat(veh:getRotation()):toTable(),
+    rot = quat(veh:getRotation()):inversed():toTable(),
     object_id = vehId
   })] = vehId
 end
@@ -114,7 +114,7 @@ local function spawnVehicle(data)
   )
   if not veh then return end
 
-  veh:setField("NGMP_SPAWN", 0, 1)
+  veh:setField("NGMP_SPAWN", 0, "1")
   setVehicleOwnership(data.steam_id, data.veh_id, veh:getID())
 end
 
