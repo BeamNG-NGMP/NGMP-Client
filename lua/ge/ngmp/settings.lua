@@ -2,46 +2,78 @@
 local M = {}
 M.dependencies = {"ngmp_main"}
 
+local categoryIndex = {}
 local settings = {}
 local defaultSettings = {}
 
 local saveTime = 5
 local saveTimer = 0
 
-local function getValue(key, default, cats)
-  local writeTbl = settings
-  for i = 1, #cats do
-    if not writeTbl[cats[i]] then
-      return default
+local function validateDefaultRec(tbl, settingsTbl)
+  for k,v in pairs(tbl) do
+    if settingsTbl[k] == nil then
+      log("W", "settings", "Settings key not found, setting default: "..tostring(k))
+      settingsTbl[k] = v
     end
-    writeTbl = writeTbl[cats[i]]
+    if type(v) == "table" then
+      validateDefaultRec(v, settingsTbl[k])
+    end
   end
+end
 
-  if writeTbl[key] ~= nil then
-    return writeTbl[key]
+local function indexCategoriesRec(parentKey, tbl)
+  for k,v in pairs(tbl) do
+    if type(v) == "table" then
+      local nextParentKey = parentKey.."/"..k
+      categoryIndex[nextParentKey] = v
+      indexCategoriesRec(nextParentKey, v)
+    end
+  end
+end
+
+local function addCategory(categoryPath)
+  local writeTbl = settings
+  for i = 1, #categoryPath do
+    local cat = categoryPath[i]
+    if not writeTbl[cat] then
+      writeTbl[cat] = {}
+    end
+    writeTbl = writeTbl[cat]
+  end
+  indexCategoriesRec("", settings)
+  return writeTbl
+end
+
+local function getValue(key, cats, default)
+  local readTbl = categoryIndex["/"..(cats and table.concat(cats, "/") or "")]
+  if readTbl[key] ~= nil then
+    return readTbl[key]
   else
     return default
   end
 end
 
 local function setValue(key, value, cats)
-  local writeTbl = settings
-  for i = 1, #cats do
-    if not writeTbl[cats[i]] then
-      writeTbl = {}
-    end
-    writeTbl = writeTbl[cats[i]]
-  end
-  writeTbl[key] = value
+  local writeTbl = categoryIndex["/"..(cats and table.concat(cats, "/") or "")]
 
+  -- we probably need to add the category
+  if not writeTbl then
+    writeTbl = addCategory(cats)
+  end
+
+  writeTbl[key] = value
   saveTimer = saveTime
+end
+
+local function save()
+  jsonWriteFile(ngmp_main.savePath.."settings.json", settings, true)
 end
 
 local function onUpdate(dt)
   if saveTimer > 0 then
     saveTimer = saveTimer - dt
     if saveTimer <= 0 then
-      jsonWriteFile(ngmp_main.savePath.."settings.json", settings, true)
+      save()
     end
   end
 end
@@ -50,24 +82,21 @@ local function onExtensionLoaded()
   defaultSettings = jsonReadFile("/ngmp/defaultSettings.json") or defaultSettings
   settings = jsonReadFile(ngmp_main.savePath.."settings.json") or settings
 
-  local function validateDefaultRec(tbl, settingsTbl)
-    for k,v in pairs(tbl) do
-      if settingsTbl[k] == nil then
-        log("W", "settings", "Settings key not found, setting default: "..tostring(k))
-        settingsTbl[k] = v
-      end
-      if type(v) == "table" then
-        validateDefaultRec(v, settingsTbl[k])
-      end
-    end
-  end
-
   validateDefaultRec(defaultSettings, settings)
+
+  categoryIndex["/"] = settings
+  indexCategoriesRec("", settings)
+end
+
+local function onExtensionUnloaded()
+  save()
 end
 
 M.onUpdate = onUpdate
 M.onExtensionLoaded = onExtensionLoaded
+M.onExtensionUnloaded = onExtensionUnloaded
 M.set = setValue
 M.get = getValue
+M.save = save
 
 return M

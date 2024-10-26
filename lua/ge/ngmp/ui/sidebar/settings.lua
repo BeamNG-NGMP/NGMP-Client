@@ -9,13 +9,21 @@ local im = ui_imgui
 
 local tabs = {
   {
-    name = "Quality of Life",
+    name = "User Interface",
     render = function()
       do
-        local boolPtr = im.BoolPtr(ngmp_settings.get("closeOnLeftClickOutOfArea", nil, {"ui", "sidebar"}))
+        local boolPtr = im.BoolPtr(ngmp_settings.get("closeOnLeftClickOutOfArea", {"ui", "sidebar"}))
         im.PushFont3("cairo_bold")
         if im.Checkbox("Close sidebar on click beside", boolPtr) then
           ngmp_settings.set("closeOnLeftClickOutOfArea", boolPtr[0], {"ui", "sidebar"})
+        end
+        im.PopFont()
+      end
+      do
+        local boolPtr = im.BoolPtr(ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"}))
+        im.PushFont3("cairo_bold")
+        if im.Checkbox("Always show SteamID in user popup", boolPtr) then
+          ngmp_settings.set("alwaysSteamIDonHover", boolPtr[0], {"ui", "generic"})
         end
         im.PopFont()
       end

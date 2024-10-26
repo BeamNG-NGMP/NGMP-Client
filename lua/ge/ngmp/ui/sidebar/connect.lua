@@ -338,8 +338,30 @@ local function renderTabItem(dt, name, func)
 end
 
 local function render(dt)
+  local style = im.GetStyle()
   im.SetWindowFontScale(0.8)
   im.PushStyleVar1(im.StyleVar_TabRounding, 5)
+
+  local playerData = ngmp_playerData.getOwnData()
+  local avatar = ngmp_playerData.getAvatar(playerData.avatarHash)
+  if avatar then
+    local sizeFac = ngmp_ui.getPercentVecX(1, false, true)/avatar.size.x
+    local size = ngmp_ui.mulVec2Num(avatar.size, sizeFac)
+
+    im.BeginChild1("ProfilePreview##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), size.y+style.WindowPadding.y*2), true, im.WindowFlags_NoScrollbar)
+    im.BeginGroup()
+    im.Image(avatar.texId, size)
+    im.SameLine()
+    im.SetCursorPosX(im.GetCursorPosX()+style.WindowPadding.x)
+    im.PushFont3("cairo_bold")
+    im.Text(playerData.name)
+    im.PopFont()
+    im.EndGroup()
+    if im.IsItemHovered() then
+      ngmp_playerData.renderTooltip(playerData.steamId)
+    end
+    im.EndChild()
+  end
 
   im.PushFont3("cairo_bold")
   if im.BeginTabBar("Connect Tabs") then
@@ -360,8 +382,8 @@ local function init()
   unstar = FS:fileExists("/art/ngmpui/star.png") and imguiUtils.texObj("/art/ngmpui/star.png")
   no_server = FS:fileExists("/art/ngmpui/tune.png") and imguiUtils.texObj("/art/ngmpui/tune.png")
 
-  ffi.copy(directConnectIp, ngmp_settings.get("directconnectIP", nil, {"ui", "sidebar"}))
-  ffi.copy(directConnectPort, ngmp_settings.get("directconnectPort", nil, {"ui", "sidebar"}))
+  ffi.copy(directConnectIp, ngmp_settings.get("directconnectIP", {"ui", "sidebar"}))
+  ffi.copy(directConnectPort, ngmp_settings.get("directconnectPort", {"ui", "sidebar"}))
 end
 
 M.render = render
