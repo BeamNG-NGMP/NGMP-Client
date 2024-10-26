@@ -63,19 +63,21 @@ local packetEncode = {
     return confirm_id, confirm_id_num
   end,
   ["VU"] = function(ownerData, vehicleData)
-    local steamId = ffi.string(ffi.new("uint64_t[1]", {ownerData.ownerId}), 8)
+    local steamId = ownerData.ownerId
+    local steamIdLen = ffi.string(ffi.new("uint8_t[1]", {steamId:len()}), 1)
     local vehId = ffi.string(ffi.new("uint16_t[1]", {ownerData.vehId}), 2)
 
-    return steamId..vehId..jsonEncode(vehicleData)
+    return steamIdLen..steamId..vehId..vehicleData, 0
   end,
   ["VT"] = function(ownerData, vehicleData)
-    local steamId = ffi.string(ffi.new("uint64_t[1]", {ownerData.ownerId}), 8)
+    local steamId = ownerData.ownerId
+    local steamIdLen = ffi.string(ffi.new("uint8_t[1]", {steamId:len()}), 1)
     local vehId = ffi.string(ffi.new("uint16_t[1]", {ownerData.vehId}), 2)
 
-    return steamId..vehId..jsonEncode(vehicleData)
+    return steamIdLen..steamId..vehId..vehicleData, 0
   end,
   ["VD"] = function(vehicleData)
-    return jsonEncode(vehicleData)
+    return jsonEncode(vehicleData), 0
   end,
 }
 
@@ -153,27 +155,31 @@ local packetDecode = {
     local confirm_id = fromUINT16(data:sub(1,2))
     local veh_id = fromUINT16(data:sub(3,4))
 
-    local object_id = ffi.new("uint64_t[1]")
-    ffi.copy(object_id, data:sub(5), 8)
+    local object_id = ffi.new("uint32_t[1]")
+    ffi.copy(object_id, data:sub(5), 4)
 
-    ngmp_vehicleMgr.confirmVehicle(confirm_id, veh_id, object_id[0])
+    ngmp_vehicleMgr.confirmVehicle(confirm_id, veh_id, tonumber(object_id[0]))
     return confirm_id
   end,
   ["VR"] = function(data)
     local confirm_id = fromUINT16(data:sub(1,2))
     local veh_id = fromUINT16(data:sub(3,4))
-
-    local steam_id = ffi.new("uint64_t[1]")
-    ffi.copy(steam_id, data:sub(5), 8)
+    local steam_id = data:sub(7)
 
     ngmp_vehicleMgr.removeVehicle(veh_id, steam_id[0])
     return confirm_id
   end,
   ["VU"] = function(data)
+    local steam_id_len = ffi.new("uint8_t[1]")
+    ffi.copy(steam_id_len, data:sub(1,1), 1)
+
+    local steamIdLen = steam_id_len[0]
     local steam_id = ffi.new("uint64_t[1]")
-    ffi.copy(steam_id, data:sub(1,8), 8)
-    local veh_id = fromUINT16(data:sub(9,10))
-    local success, jsonData = pcall(jsonDecode, data:sub(11))
+    ffi.copy(steam_id, data:sub(2,steamIdLen+2), steamIdLen)
+    local offset = steamIdLen+3
+
+    local veh_id = fromUINT16(data:sub(offset,offset+1))
+    local success, jsonData = pcall(jsonDecode, data:sub(offset+2))
     if not success then
       log("E", "", jsonData)
       jsonData = {}
@@ -183,10 +189,16 @@ local packetDecode = {
     return 0
   end,
   ["VT"] = function(data)
+    local steam_id_len = ffi.new("uint8_t[1]")
+    ffi.copy(steam_id_len, data:sub(1,1), 1)
+
+    local steamIdLen = steam_id_len[0]
     local steam_id = ffi.new("uint64_t[1]")
-    ffi.copy(steam_id, data:sub(1,8), 8)
-    local veh_id = fromUINT16(data:sub(9,10))
-    local success, jsonData = pcall(jsonDecode, data:sub(11))
+    ffi.copy(steam_id, data:sub(2,steamIdLen+2), steamIdLen)
+    local offset = steamIdLen+3
+
+    local veh_id = fromUINT16(data:sub(offset,offset+1))
+    local success, jsonData = pcall(jsonDecode, data:sub(offset+2))
     if not success then
       log("E", "", jsonData)
       jsonData = {}
@@ -203,9 +215,10 @@ local function sendPacket(packetType, ...)
   local args = {...}
   local data
   local confirmId
-  if args[1] and type(args[1]) == "table" then
-    confirmId = generateConfirmID(true)
-    data = confirmId..(jsonEncode(args[1]) or "")
+  if #args == 1 and type(args[1]) == "table" then
+    local confirm_id, confirm_id_num = generateConfirmID(true)
+    data = confirm_id..(jsonEncode(args[1]) or "")
+    confirmId = confirm_id_num
   elseif packetEncode[packetType] then
     data, confirmId = packetEncode[packetType](...)
   else

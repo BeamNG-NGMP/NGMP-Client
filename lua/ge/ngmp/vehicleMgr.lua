@@ -57,9 +57,8 @@ local function setVehicleOwnership(steam_id, veh_id, object_id)
 end
 
 local function confirmVehicle(confirm_id, veh_id, object_id)
-  dump(waitingForConfirm[confirm_id], object_id)
   if waitingForConfirm[confirm_id] == object_id then
-    local steamId = ngmp_main.steamId
+    local steamId = ngmp_playerData.getOwnData().steamId
     local owner = M.owners[steamId] or {}
     local vehFullId = steamId.."_"..veh_id
     local veh = be:getObjectByID(object_id)
@@ -68,6 +67,7 @@ local function confirmVehicle(confirm_id, veh_id, object_id)
       vehName = veh:getName(),
       vehFullId = vehFullId,
       vehObjId = object_id,
+      vehId = veh_id,
       veh = veh,
     }
 
@@ -78,11 +78,11 @@ local function confirmVehicle(confirm_id, veh_id, object_id)
     M.owners[steamId] = owner
     M.vehsByVehFullId[vehFullId] = {
       veh,
-      owner
+      owner[veh_id]
     }
     M.vehsByObjId[object_id] = {
       veh,
-      owner
+      owner[veh_id]
     }
 
     waitingForConfirm[confirm_id] = nil
@@ -106,7 +106,7 @@ end
 local function sendVehicleData(vehFullId, vehData)
   local vehObj = M.vehsByVehFullId[vehFullId]
   if vehObj then
-    ngmp_network.sendPacket("VU", vehObj[2], vehData)
+    --ngmp_network.sendPacket("VU", vehObj[2], vehData)
   end
 end
 
@@ -118,7 +118,7 @@ local function sendVehicleTransformData(vehFullId, vehData)
 end
 
 local function spawnVehicle(data)
-  if data.steam_id == ngmp_main.steamId then return end
+  if data.steam_id == ngmp_playerData.getOwnData().steamId then return end
   local vehFullId = data.steam_id.."_"..data.veh_id
   local objName = "NGMP_"..vehFullId
 
