@@ -114,14 +114,6 @@ local function onUpdate(dt)
   end
 end
 
-local function onNGMPLogin(isLoggedIn, playerName, steamId, avatarHash)
-  ownData = {
-    name = playerName,
-    steamId = steamId,
-    avatarHash = avatarHash
-  }
-end
-
 local function set(rawData)
   local newData = {}
   M.playerData = newData
@@ -161,7 +153,18 @@ local function onExtensionLoaded()
   end
 end
 
+local function onNGMPLogin(isLoggedIn, playerName, steamId, avatarHash)
+  ownData = {
+    name = playerName,
+    steamId = steamId,
+    avatarHash = avatarHash
+  }
+
+  ngmp_network.registerPacketDecodeFunc("PD", set)
+end
+
 M.onNGMPLogin = onNGMPLogin
+
 M.onUpdate = onUpdate
 M.onExtensionLoaded = onExtensionLoaded
 M.renderTooltip = renderTooltip

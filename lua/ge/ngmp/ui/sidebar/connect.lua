@@ -84,7 +84,7 @@ local function renderDirectConnect(dt)
     end
     im.Dummy(im.ImVec2(0,style.ItemSpacing.y))
     if ngmp_ui.primaryButton("Connect", im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeight()*2)) then
-      ngmp_network.sendPacket("HJ", ffi.string(directConnectIp), ffi.string(directConnectPort))
+      ngmp_network.sendPacket("HJ", {data = {ffi.string(directConnectIp), ffi.string(directConnectPort)}})
       ngmp_settings.set("directconnectIP", ffi.string(directConnectIp), {"ui", "sidebar"})
       ngmp_settings.set("directconnectPort", ffi.string(directConnectPort), {"ui", "sidebar"})
     end
@@ -261,7 +261,7 @@ local function renderServerlist(dt)
 
       im.PushFont3("cairo_bold")
       if ngmp_ui.primaryButton("Connect", im.ImVec2(xWidth,0)) then
-        ngmp_network.sendPacket("HJ", key)
+        ngmp_network.sendPacket("HJ", {data = {key:match("^(.+):(%d+)$")}})
       end
       im.PopFont()
 

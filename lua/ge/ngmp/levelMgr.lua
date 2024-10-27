@@ -12,7 +12,8 @@ local function onClientPreStartMission(filename)
   end
 end
 
-local function loadLevel(filename)
+local function loadLevel(data)
+  local filename = data.map_string
   if FS:fileExists(filename) then
     loadDefaultVehFunc = core_levels.maybeLoadDefaultVehicle
     core_levels.maybeLoadDefaultVehicle = nop
@@ -28,6 +29,11 @@ local function loadLevel(filename)
   end
 end
 
+local function onNGMPInit()
+  ngmp_network.registerPacketDecodeFunc("LM", loadLevel)
+end
+
+M.onNGMPInit = onNGMPInit
 M.onClientPreStartMission = onClientPreStartMission
 M.loadLevel = loadLevel
 

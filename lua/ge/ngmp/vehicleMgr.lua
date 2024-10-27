@@ -17,25 +17,25 @@ local function onVehicleSpawned(objectId, veh)
   if FS:fileExists(veh.partConfig) then
     veh.partConfig = serialize(jsonReadFile(veh.partConfig)) or veh.partConfig
   end
-  waitingForConfirm[ngmp_network.sendPacket("VS", {
+  waitingForConfirm[ngmp_network.sendPacket("VS", {data = {{
     Jbeam = veh.Jbeam,
     partConfig = veh.partConfig,
     paints = veh.paints,
     pos = veh:getPosition():toTable(),
     rot = quat(veh:getRotation()):toTable(),
     object_id = objectId
-  })] = objectId
+  }}})] = objectId
   be:enterVehicle(0, veh)
 end
 
-local function setVehicleOwnership(steam_id, veh_id, object_id)
+local function setVehicleOwnership(steam_id, vehicle_id, object_id)
   local owner = M.owners[steam_id] or {}
-  local vehFullId = steam_id.."_"..veh_id
+  local vehFullId = steam_id.."_"..vehicle_id
   local veh = be:getObjectByID(object_id)
   table.insert(owner, {
     ownerId = steam_id,
     vehName = veh:getName(),
-    vehId = veh_id,
+    vehId = vehicle_id,
     vehFullId = vehFullId,
     vehObjId = object_id,
     veh = veh,
@@ -57,18 +57,22 @@ local function setVehicleOwnership(steam_id, veh_id, object_id)
   }
 end
 
-local function confirmVehicle(confirm_id, veh_id, object_id)
-  if waitingForConfirm[confirm_id] == object_id then
+local function confirmVehicle(data)
+  local confirmId = data.confirm_id
+  local vehId = data.vehicle_id
+  local objectId = data.object_id
+
+  if waitingForConfirm[confirmId] == objectId then
     local steamId = ngmp_playerData.getOwnData().steamId
     local owner = M.owners[steamId] or {}
-    local vehFullId = steamId.."_"..veh_id
-    local veh = be:getObjectByID(object_id)
-    owner[veh_id] = {
+    local vehFullId = steamId.."_"..vehId
+    local veh = be:getObjectByID(objectId)
+    owner[vehId] = {
       ownerId = steamId,
       vehName = veh:getName(),
       vehFullId = vehFullId,
-      vehObjId = object_id,
-      vehId = veh_id,
+      vehObjId = objectId,
+      vehId = vehId,
       veh = veh,
     }
 
@@ -80,15 +84,57 @@ local function confirmVehicle(confirm_id, veh_id, object_id)
     M.owners[steamId] = owner
     M.vehsByVehFullId[vehFullId] = {
       veh,
-      owner[veh_id]
+      owner[vehId]
     }
-    M.vehsByObjId[object_id] = {
+    M.vehsByObjId[objectId] = {
       veh,
-      owner[veh_id]
+      owner[vehId]
     }
 
-    waitingForConfirm[confirm_id] = nil
+    waitingForConfirm[confirmId] = nil
   end
+end
+
+local function spawnVehicle(data)
+  if data.steam_id == ngmp_playerData.getOwnData().steamId then return end
+  local vehFullId = data.steam_id.."_"..data.vehicle_id
+  local objName = "NGMP_"..vehFullId
+
+  dontSendSpawnInfo[objName] = true
+  local vehData = data.vehicle_data
+  local paintData = deserialize(vehData.paints)
+  local veh = spawn.spawnVehicle(
+    vehData.Jbeam,
+    vehData.partConfig,
+    vec3(vehData.pos[1],vehData.pos[2],vehData.pos[3]),
+    quat(vehData.rot[1],vehData.rot[2],vehData.rot[3],vehData.rot[4]),
+    {
+      vehicleName = objName,
+      paint = paintData[1],
+      paint2 = paintData[2],
+      paint3 = paintData[3],
+      autoEnterVehicle = false,
+    }
+  )
+  if not veh then return end
+
+  setVehicleOwnership(data.steam_id, data.vehicle_id, veh:getID())
+end
+
+local function removeVehicle(data)
+  local vehId = data.vehicle_id
+  local steamId = data.steam_id
+  local owner = M.owners[steamId] or {}
+  local vehFullId = steamId.."_"..vehId
+  local veh = M.vehsByVehFullId[vehFullId]
+
+  veh:delete()
+
+  owner[vehId] = nil
+  M.vehsByVehFullId[vehFullId] = nil
+  M.vehsByObjId[veh:getID()] = nil
+
+  M.owners[steamId] = owner
 end
 
 local function setVehicleData(vehFullId, data)
@@ -108,55 +154,56 @@ end
 local function sendVehicleData(vehFullId, vehData)
   local veh = M.vehsByVehFullId[vehFullId]
   if veh and veh[2].ownerId == ngmp_playerData.getOwnData().steamId then
-    --ngmp_network.sendPacket("VU", veh[2], vehData)
+    --ngmp_network.sendPacket("VU", {data = {vehObj[2], vehData}})
   end
 end
 
 local function sendVehicleTransformData(vehFullId, vehData)
   local vehObj = M.vehsByVehFullId[vehFullId]
   if vehObj then
-    ngmp_network.sendPacket("VT", vehObj[2], vehData)
+    ngmp_network.sendPacket("VT", {data = {vehObj[2], vehData}})
   end
 end
 
-local function spawnVehicle(data)
-  if data.steam_id == ngmp_playerData.getOwnData().steamId then return end
-  local vehFullId = data.steam_id.."_"..data.veh_id
-  local objName = "NGMP_"..vehFullId
-
-  dontSendSpawnInfo[objName] = true
-  local paintData = deserialize(data.paints)
-  local veh = spawn.spawnVehicle(
-    data.Jbeam,
-    data.partConfig,
-    vec3(data.pos[1],data.pos[2],data.pos[3]),
-    quat(data.rot[1],data.rot[2],data.rot[3],data.rot[4]),
-    {
-      vehicleName = objName,
-      paint = paintData[1],
-      paint2 = paintData[2],
-      paint3 = paintData[3],
-      autoEnterVehicle = false,
+local function onNGMPInit()
+  ngmp_network.registerPacketEncodeFunc("VS", function(data)
+    local confirm_id = ngmp_network.generateConfirmID()
+    return {
+      confirm_id = confirm_id,
+      vehicle_data = data,
+    }, confirm_id
+  end)
+  ngmp_network.registerPacketEncodeFunc("VU", function(ownerData, vehicleData)
+    return {
+      steam_id = ownerData.steamId,
+      transform = vehicleData,
+      vehicle_id = ownerData.vehId,
     }
-  )
-  if not veh then return end
+  end)
+  ngmp_network.registerPacketEncodeFunc("VT", function(ownerData, vehicleData)
+    return {
+      steam_id = ownerData.steamId,
+      transform = vehicleData,
+      vehicle_id = ownerData.vehId,
+    }
+  end)
+  ngmp_network.registerPacketEncodeFunc("VD", function(ownerData, licenseText, paints)
+    return {
+      steam_id = ownerData.steamId,
+      display_data = {
+        license_text = licenseText,
+        paints = paints
+      },
+      vehicle_id = ownerData.vehId,
+    }
+  end)
 
-  setVehicleOwnership(data.steam_id, data.veh_id, veh:getID())
+  ngmp_network.registerPacketDecodeFunc("VS", spawnVehicle)
+  ngmp_network.registerPacketDecodeFunc("VA", confirmVehicle)
+  ngmp_network.registerPacketDecodeFunc("VR", confirmVehicle)
 end
 
-local function removeVehicle(veh_id, steam_id)
-  local owner = M.owners[steam_id] or {}
-  local vehFullId = steam_id.."_"..veh_id
-  local veh = M.vehsByVehFullId[vehFullId]
-
-  veh:delete()
-
-  owner[veh_id] = nil
-  M.vehsByVehFullId[vehFullId] = nil
-  M.vehsByObjId[veh:getID()] = nil
-
-  M.owners[steam_id] = owner
-end
+M.onNGMPInit = onNGMPInit
 
 M.sendVehicleTransformData = sendVehicleTransformData
 M.sendVehicleData = sendVehicleData

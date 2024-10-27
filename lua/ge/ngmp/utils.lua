@@ -61,6 +61,13 @@ local function splitIP(ipStr)
   return ipStr
 end
 
+local function ffiConvertNumber(str, bytes)
+  local _res = ffi.new(string.format("uint%d_t[1]", bytes*8))
+  ffi.copy(_res, str, bytes)
+  return _res[0]
+end
+
 M.splitIP = splitIP
+M.ffiConvertNumber = ffiConvertNumber
 
 return M

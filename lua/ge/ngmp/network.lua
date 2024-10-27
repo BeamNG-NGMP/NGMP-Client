@@ -2,6 +2,7 @@
 local M = {}
 M.dependencies = {"ngmp_main"}
 
+local ngmpUtils = rerequire("ngmp/utils")
 local http = require("socket/http")
 http.TIMEOUT = 0.1
 local MAX_CONFIRM_ID = 65535
@@ -22,7 +23,7 @@ M.connection = {
 }
 
 local confirmIdCache = {}
-local function generateConfirmID(asString)
+local function generateConfirmID()
   local confirm_id
   local loops = 0
   repeat
@@ -31,55 +32,11 @@ local function generateConfirmID(asString)
   until not confirmIdCache[confirm_id] or loops > MAX_CONFIRM_ID_ITERATION
 
   confirmIdCache[confirm_id] = true
-  if asString then
-    return ffi.string(ffi.new("uint16_t[1]", {confirm_id}), 2), confirm_id
-  end
   return confirm_id
 end
 
-local packetEncode = {
-  ["CI"] = function()
-    local confirm_id = generateConfirmID()
-    local raw = {
-      confirm_id = confirm_id,
-      userfolder = FS:getUserPath(), -- uses OS standard
-      client_version = ngmp_main.clientVersion,
-    }
-
-    return jsonEncode(raw), confirm_id
-  end,
-  ["HJ"] = function(ip_address, port)
-    ip_address = ip_address and ip_address ~= "" and ip_address or M.connection.ip
-    port = port and port ~= "" and port or M.connection.serverPort
-    local confirm_id, confirm_id_num = generateConfirmID(true)
-    return confirm_id..ip_address..":"..port, confirm_id_num
-  end,
-  ["MR"] = function(mods)
-    local confirm_id, confirm_id_num = generateConfirmID(true)
-    return confirm_id..mods, confirm_id_num
-  end,
-  ["RL"] = function()
-    local confirm_id, confirm_id_num = generateConfirmID(true)
-    return confirm_id, confirm_id_num
-  end,
-  ["VU"] = function(ownerData, vehicleData)
-    local steamId = ownerData.ownerId
-    local steamIdLen = ffi.string(ffi.new("uint8_t[1]", {steamId:len()}), 1)
-    local vehId = ffi.string(ffi.new("uint16_t[1]", {ownerData.vehId}), 2)
-
-    return steamIdLen..steamId..vehId..vehicleData, 0
-  end,
-  ["VT"] = function(ownerData, vehicleData)
-    local steamId = ownerData.ownerId
-    local steamIdLen = ffi.string(ffi.new("uint8_t[1]", {steamId:len()}), 1)
-    local vehId = ffi.string(ffi.new("uint16_t[1]", {ownerData.vehId}), 2)
-
-    return steamIdLen..steamId..vehId..vehicleData, 0
-  end,
-  ["VD"] = function(vehicleData)
-    return jsonEncode(vehicleData), 0
-  end,
-}
+-- use registerPacketEncodeFunc to add one
+local packetEncode = {}
 
 local function fromUINT16(bytes)
   local uint = ffi.new("uint16_t[1]")
@@ -87,141 +44,66 @@ local function fromUINT16(bytes)
   return uint[0]
 end
 
+--[[
+only the generics are here
+use registerPacketDecodeFunc to add one
+
+- confirm id return is optional
+]]
 local packetDecode = {
   ["CC"] = function(data)
-    local confirm_id = fromUINT16(data:sub(1,2))
-    return confirm_id
-  end,
-  ["VC"] = function(data)
-    local confirm_id = fromUINT16(data:sub(1,2))
-    local protocol_version = fromUINT16(data:sub(3,4))
-
-    ngmp_main.setBridgeConnected(protocol_version, true)
-    return confirm_id
-  end,
-  ["AI"] = function(data)
-    local success, jsonData = pcall(jsonDecode, data)
-    if not success then
-      log("E", "", jsonData)
-      jsonData = {}
-    end
-
-    ngmp_main.setLogin(jsonData.success, jsonData.player_name, jsonData.steam_id, jsonData.avatar_hash)
-    return jsonData.confirm_id or 0
-  end,
-  ["MP"] = function(data)
-    local success, jsonData = pcall(jsonDecode, data)
-    if not success then
-      log("E", "", jsonData)
-      jsonData = {}
-    end
-
-    if jsonData.mod_name then
-      ngmp_mods.modDownloads[jsonData.mod_name] = jsonData.progress/100
-    end
-    return jsonData.confirm_id or 0
-  end,
-  ["LM"] = function(data)
-    local confirm_id = fromUINT16(data:sub(1,2))
-    local mapString = data:sub(3)
-
-    ngmp_levelMgr.loadLevel(mapString)
-    return confirm_id
-  end,
-  ["PD"] = function(data)
-    local success, jsonData = pcall(jsonDecode, data)
-    if not success then
-      log("E", "", jsonData)
-      jsonData = {}
-    end
-
-    ngmp_playerData.set(jsonData)
-    return 0
-  end,
-  ["VS"] = function(data)
-    local confirm_id = fromUINT16(data:sub(1,2))
-    local success, jsonData = pcall(jsonDecode, data:sub(3))
-    if not success then
-      log("E", "", jsonData)
-      jsonData = {}
-    end
-
-    if jsonData.Jbeam then
-      ngmp_vehicleMgr.spawnVehicle(jsonData)
-    end
-    return confirm_id
-  end,
-  ["VA"] = function(data)
-    local confirm_id = fromUINT16(data:sub(1,2))
-    local veh_id = fromUINT16(data:sub(3,4))
-
-    local object_id = ffi.new("uint32_t[1]")
-    ffi.copy(object_id, data:sub(5), 4)
-
-    ngmp_vehicleMgr.confirmVehicle(confirm_id, veh_id, tonumber(object_id[0]))
-    return confirm_id
-  end,
-  ["VR"] = function(data)
-    local confirm_id = fromUINT16(data:sub(1,2))
-    local veh_id = fromUINT16(data:sub(3,4))
-    local steam_id = data:sub(7)
-
-    ngmp_vehicleMgr.removeVehicle(veh_id, steam_id[0])
-    return confirm_id
-  end,
-  ["VU"] = function(data)
-    local steam_id_len = ffi.new("uint8_t[1]")
-    ffi.copy(steam_id_len, data:sub(1,1), 1)
-
-    local steamIdLen = steam_id_len[0]
-    local steam_id = data:sub(2,steamIdLen+2)
-    local offset = steamIdLen+3
-
-    local veh_id = fromUINT16(data:sub(offset,offset+1))
-    local success, jsonData = pcall(jsonDecode, data:sub(offset+2))
-    if not success then
-      log("E", "", jsonData)
-      jsonData = {}
-    end
-
-    ngmp_vehicleMgr.setVehicleData(steam_id.."_"..veh_id, jsonData)
-    return 0
-  end,
-  ["VT"] = function(data)
-    local steam_id_len = ffi.new("uint8_t[1]")
-    ffi.copy(steam_id_len, data:sub(1,1), 1)
-
-    local steamIdLen = steam_id_len[0]
-    local steam_id = data:sub(2,steamIdLen+2)
-    local offset = steamIdLen+3
-
-    local veh_id = fromUINT16(data:sub(offset,offset+1))
-    local success, jsonData = pcall(jsonDecode, data:sub(offset+2))
-    if not success then
-      log("E", "", jsonData)
-      jsonData = {}
-    end
-
-    ngmp_vehicleMgr.setVehicleTransformData(steam_id.."_"..veh_id, jsonData)
-    return 0
+    return data.confirm_id
   end,
 }
 
-local function sendPacket(packetType, ...)
+local function onReceive(data)
+  local packetType = data:sub(1, 2)
+
+  if packetType == "" then return end
+  if not packetDecode[packetType] then
+    -- don't know what to do? just forget about it. your problems are not there if you ignore them.
+    log("E", "onReceive", string.format("Received packet of type %s is either unknown or not registered.", packetType))
+    return
+  end
+
+  local packetLengthRaw = data:sub(3, 6)
+  local packetLength = ngmpUtils.ffiConvertNumber(packetLengthRaw, 4)
+
+  local rawData = data:sub(7)
+  if rawData:len() == packetLength then
+    -- non-json packets are not supported
+    local success, jsonData = pcall(jsonDecode, rawData)
+    if not success then
+      log("E", "onReceive", "Error during jsonDecode:")
+      log("E", "onReceive", jsonData)
+      return
+    end
+
+    local confirmId = packetDecode[packetType]()
+    if confirmId then
+      confirmIdCache[confirmId] = true
+    end
+  else
+    log("E", "onReceive", string.format("Received packet of type %s does not match length! Expected: %d bytes, received: %d bytes.", packetType, packetLength, rawData:len()))
+  end
+end
+
+local function sendPacket(packetType, context)
   if not M.connection.connected then return end
 
-  local args = {...}
   local data
   local confirmId
-  if #args == 1 and type(args[1]) == "table" then
-    local confirm_id, confirm_id_num = generateConfirmID(true)
-    data = confirm_id..(jsonEncode(args[1]) or "")
-    confirmId = confirm_id_num
-  elseif packetEncode[packetType] then
-    data, confirmId = packetEncode[packetType](...)
+  if context.custom then
+    data = jsonEncode(context.data) or ""
   else
-    local confirm_id, confirm_id_num = generateConfirmID(true)
-    data, confirmId = confirm_id, confirm_id_num
+    if packetEncode[packetType] then
+      data, confirmId = packetEncode[packetType](unpack(context.data))
+      data = jsonEncode(data) -- non-json packets are not supported
+    else
+      -- Whoops, doesn't exists lol
+      log("E", "sendPacket", string.format("Packet of type %s was not declared as custom and an encode function does not exist.", packetType))
+      return
+    end
   end
 
   local len = ffi.string(ffi.new("uint32_t[1]", {#data}), 4)
@@ -268,28 +150,6 @@ local function retryConnection()
   sendPacket("CI")
 end
 
-local function onReceive(data)
-  local packetType = data:sub(1, 2)
-
-  if packetType ~= "" and packetDecode[packetType] then
-    local packetLength = 0
-    local packetLengthRaw = data:sub(3, 6)
-    do
-      -- convert to actual num
-      -- this was for sure an experience
-      local _packetLength = ffi.new("uint32_t[1]")
-      ffi.copy(_packetLength, packetLengthRaw, 4)
-      packetLength = _packetLength[0]
-    end
-
-    local rawData = data:sub(7)
-    if rawData:len() == packetLength then
-      local confirmId = packetDecode[packetType](rawData)
-      confirmIdCache[confirmId] = true
-    end
-  end
-end
-
 local function onUpdate(dt)
   if not M.connection.connected then return end
 
@@ -303,11 +163,11 @@ local function httpGet(url)
   return http.request("http://127.0.0.1:4434/external/"..url)
 end
 
-local function addPacketDecodeFunc(packetType, func)
+local function registerPacketDecodeFunc(packetType, func)
   packetDecode[packetType] = func
 end
 
-local function addPacketEncodeFunc(packetType, func)
+local function registerPacketEncodeFunc(packetType, func)
   packetEncode[packetType] = func
 end
 
@@ -331,7 +191,8 @@ M.sendPacket = sendPacket
 
 M.httpGet = httpGet
 
-M.addPacketDecodeFunc = addPacketDecodeFunc
-M.addPacketEncodeFunc = addPacketEncodeFunc
+M.generateConfirmID = generateConfirmID
+M.registerPacketDecodeFunc = registerPacketDecodeFunc
+M.registerPacketEncodeFunc = registerPacketEncodeFunc
 
 return M

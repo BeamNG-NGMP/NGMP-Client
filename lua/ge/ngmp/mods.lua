@@ -51,8 +51,16 @@ end
 
 local function onExtensionLoaded()
   setExtensionUnloadMode(M, "manual")
-
   refreshCache()
+
+  ngmp_network.registerPacketDecodeFunc("MP", function(data)
+    modDownloads[data.mod_name] = data.progress
+  end)
+
+  --ngmp_network.sendPacket("MR", {data = {mod_name}})
+  ngmp_network.registerPacketEncodeFunc("MR", function(mod_name)
+    return mod_name
+  end)
 end
 
 M.onExtensionLoaded = onExtensionLoaded

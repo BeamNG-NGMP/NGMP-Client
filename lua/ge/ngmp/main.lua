@@ -38,18 +38,32 @@ M.extensionLoadList = {
   "ngmp_ui_sidebar",
 }
 
-local function setLogin(loggedIn, player, steam_id, avatar_hash)
-  M.isLoggedIn = loggedIn or false
-  local playerName = player or ""
-  local steamId = steam_id or ""
-  local avatarHash = avatar_hash or ""
-  extensions.hook("onNGMPLogin", M.isLoggedIn, playerName, steamId, avatarHash)
+local function setLogin(data)
+  M.isLoggedIn = data.success or false
+  extensions.hook("onNGMPLogin",
+    M.isLoggedIn,
+    data.player_name or "",
+    data.steam_id or "",
+    data.avatar_hash or ""
+  )
 end
 
-local function setBridgeConnected(protocolVersion, bridgeConnected)
-  M.isBridgeConnected = bridgeConnected or true
-  M.protocolVersion = protocolVersion or M.protocolVersion
+local function setBridgeConnected(data)
+  M.isBridgeConnected = data.bridgeConnected or true
+  M.protocolVersion = data.protocolVersion or M.protocolVersion
   extensions.hook("onNGMPLauncherConnect", M.isBridgeConnected)
+end
+
+local function disconnect(err)
+  if err then
+    -- connection fail!
+  else
+    -- connection ended
+  end
+end
+
+local function kicked(reason)
+  disconnect()
 end
 
 local function onUpdate()
@@ -59,6 +73,31 @@ local function onUpdate()
   for i=1, #M.extensionLoadList do
     extensions.load(M.extensionLoadList[i])
   end
+  ngmp_network.registerPacketDecodeFunc("VC", setBridgeConnected) -- Version packet
+  ngmp_network.registerPacketDecodeFunc("AI", setLogin) -- AuthenticationInfo packet
+  ngmp_network.registerPacketEncodeFunc("LR", nop) -- LoginRequest packet
+  ngmp_network.registerPacketEncodeFunc("RL", nop) -- ReloadLauncher packet
+
+  ngmp_network.registerPacketDecodeFunc("HX", disconnect) -- ExitServer packet
+  ngmp_network.registerPacketDecodeFunc("CE", disconnect) -- ConnectionError packet
+  ngmp_network.registerPacketDecodeFunc("PK", kicked)
+
+  ngmp_network.registerPacketEncodeFunc("CI", function() -- ClientInfo packet
+    return {
+      userfolder = FS:getUserPath(), -- uses OS standard
+      client_version = ngmp_main.clientVersion,
+    }
+  end)
+  ngmp_network.registerPacketEncodeFunc("HJ", function(ip_address, port) -- JoinServer packet
+    local finalIp = ip_address
+    if finalIp and port and port ~= "" then
+      finalIp = finalIp..":"..port
+    end
+    return {
+      ip_address = finalIp or M.connection.ip..":"..M.connection.serverPort
+    }
+  end)
+
   extensions.hook("onNGMPInit")
 end
 
