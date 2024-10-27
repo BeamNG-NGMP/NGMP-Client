@@ -174,8 +174,7 @@ local packetDecode = {
     ffi.copy(steam_id_len, data:sub(1,1), 1)
 
     local steamIdLen = steam_id_len[0]
-    local steam_id = ffi.new("uint64_t[1]")
-    ffi.copy(steam_id, data:sub(2,steamIdLen+2), steamIdLen)
+    local steam_id = data:sub(2,steamIdLen+2)
     local offset = steamIdLen+3
 
     local veh_id = fromUINT16(data:sub(offset,offset+1))
@@ -185,7 +184,7 @@ local packetDecode = {
       jsonData = {}
     end
 
-    ngmp_vehicleMgr.setVehicleData(steam_id[0].."_"..veh_id, jsonData)
+    ngmp_vehicleMgr.setVehicleData(steam_id.."_"..veh_id, jsonData)
     return 0
   end,
   ["VT"] = function(data)
@@ -193,8 +192,7 @@ local packetDecode = {
     ffi.copy(steam_id_len, data:sub(1,1), 1)
 
     local steamIdLen = steam_id_len[0]
-    local steam_id = ffi.new("uint64_t[1]")
-    ffi.copy(steam_id, data:sub(2,steamIdLen+2), steamIdLen)
+    local steam_id = data:sub(2,steamIdLen+2)
     local offset = steamIdLen+3
 
     local veh_id = fromUINT16(data:sub(offset,offset+1))
@@ -204,7 +202,7 @@ local packetDecode = {
       jsonData = {}
     end
 
-    ngmp_vehicleMgr.setVehicleTransformData(steam_id[0].."_"..veh_id, jsonData)
+    ngmp_vehicleMgr.setVehicleTransformData(steam_id.."_"..veh_id, jsonData)
     return 0
   end,
 }
