@@ -28,7 +28,7 @@ local function get()
     pos = obj:getPosition():toTable(),
     rot = {obj:getRotation()},
     vel = linearVel:toTable(),
-    velAng = angularVel:toTable()
+    rvel = angularVel:toTable()
   }
 
   return transform
@@ -63,7 +63,7 @@ local function calculateVelocities(dt)
   end
 
   -- this needs to be global to apply forces
-  local angularDiff = (received.velAng - current.velAng) * M.applyForceAng * dt * M.timeFac
+  local angularDiff = (received.rvel - current.rvel) * M.applyForceAng * dt * M.timeFac
 
   return linearMove, -angularDiff
 end
@@ -94,7 +94,7 @@ local function updateGFX(dt)
     pos = obj:getPosition(),
     rot = quat(obj:getRotation()),
     vel = linearVel,
-    velAng = angularVel
+    rvel = angularVel
   }
 
   -- fortune telling is done in launcher
@@ -116,7 +116,7 @@ local function onPhysicsStep(dtPhys)
     pos = obj:getPosition(),
     rot = quat(obj:getRotation()),
     vel = linearVel,
-    velAng = angularVel
+    rvel = angularVel
   }
 
   step = step + dtPhys
@@ -131,7 +131,7 @@ local function set(data)
     pos = vec3(data.pos)+vec3(0,0,0.03),
     rot = quat(data.rot),
     vel = vec3(data.vel),
-    velAng = vec3(data.velAng)
+    rvel = vec3(data.rvel)
   }
 end
 
