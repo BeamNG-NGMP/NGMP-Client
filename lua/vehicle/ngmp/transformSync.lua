@@ -110,6 +110,7 @@ local function updateGFX(dt)
 end
 
 local function onPhysicsStep(dtPhys)
+  if ngmp_sync.mode == "receive" then return end
   local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
   current = {
     pos = obj:getPosition(),

@@ -3,6 +3,7 @@ local M = {}
 
 local modulePath = "/lua/vehicle/ngmp/sync"
 M.vehFullId = ""
+M.mode = "receive"
 M.modules = {}
 local modules = M.modules -- saves 1 table lookup
 
@@ -10,6 +11,7 @@ local step = 0
 local stepSize = 1/50
 
 local function onPhysicsStep(dtPhys)
+  if M.mode == "receive" then return end
   step = step + dtPhys
   if step > stepSize then
     step = 0
