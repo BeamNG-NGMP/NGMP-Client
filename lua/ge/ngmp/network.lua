@@ -93,11 +93,11 @@ local function sendPacket(packetType, context)
 
   local data
   local confirmId
-  if context.custom then
+  if context and context.custom then
     data = jsonEncode(context.data) or ""
   else
     if packetEncode[packetType] then
-      data, confirmId = packetEncode[packetType](unpack(context.data))
+      data, confirmId = packetEncode[packetType](context and unpack(context.data))
       data = jsonEncode(data) -- non-json packets are not supported
     else
       -- Whoops, doesn't exists lol
