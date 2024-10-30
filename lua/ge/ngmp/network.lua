@@ -78,7 +78,7 @@ local function onReceive(data)
       return
     end
 
-    local confirmId = packetDecode[packetType]()
+    local confirmId = packetDecode[packetType](jsonData)
     if confirmId then
       confirmIdCache[confirmId] = true
     end
