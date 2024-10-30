@@ -63,9 +63,9 @@ local function calculateVelocities(dt)
   end
 
   -- this needs to be global to apply forces
-  local angularDiff = (received.rvel - current.rvel) * M.applyForceAng * dt * M.timeFac
+  local angularMove = (received.rvel - current.rvel) * M.applyForceAng * dt * M.timeFac
 
-  return linearMove, -angularDiff
+  return linearMove, -angularMove
 end
 
 local function drawDebug()

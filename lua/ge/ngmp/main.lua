@@ -5,11 +5,12 @@ local M = {}
 M.toml = require("ngmp/tomlFile")
 M.savePath = "/"
 M.clientVersion = 0
+
+-- TODO: actually implement a check for this
 M.protocolVersion = 0
 
-local toml = M.toml
 do -- meta stuff
-  local configData = toml.readFile("/ngmp/config.toml") or {}
+  local configData = M.toml.readFile("/ngmp/config.toml") or {}
 
   M.clientVersion = configData.client_version or M.clientVersion
   M.savePath = configData.save_path or M.savePath
@@ -30,6 +31,7 @@ M.extensionLoadList = {
   "ngmp_playerData",
   "ngmp_serverList",
 
+  -- the managers...
   "ngmp_levelMgr",
   "ngmp_vehicleMgr",
 
@@ -73,6 +75,8 @@ local function onUpdate()
   for i=1, #M.extensionLoadList do
     extensions.load(M.extensionLoadList[i])
   end
+
+  -- register all generic, connection specific or login specific packets
   ngmp_network.registerPacketDecodeFunc("VC", setBridgeConnected) -- Version packet
   ngmp_network.registerPacketDecodeFunc("AI", setLogin) -- AuthenticationInfo packet
   ngmp_network.registerPacketEncodeFunc("LR", nop) -- LoginRequest packet
@@ -98,6 +102,7 @@ local function onUpdate()
     }
   end)
 
+  -- startup after *all* modules are loaded
   extensions.hook("onNGMPInit")
 end
 

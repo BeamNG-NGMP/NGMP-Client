@@ -151,7 +151,7 @@ M.onExtensionLoaded = onExtensionLoaded
 M.onUpdate = onUpdate
 M.getMainSizePos = getMainSizePos
 
--- DYNAMIC UI
+-- need this for dynamic ui
 M.getGlobalVec = getGlobalVec
 M.getGlobalVecX = getGlobalVecX
 M.getGlobalVecY = getGlobalVecY
@@ -159,14 +159,14 @@ M.getPercentVec = getPercentVec
 M.getPercentVecX = getPercentVecX
 M.getPercentVecY = getPercentVecY
 
--- UI WIDGETS
+-- custom ui widgets
 M.primaryButton = primaryButton
 M.button = button
 
--- WIDGET HELPERS
+-- helper stuff
 M.calculateButtonSize = calculateButtonSize
 
--- IMVEC2 MATH
+-- mathematics
 M.addVec2 = addVec2
 M.subVec2 = subVec2
 M.avgVec2 = avgVec2

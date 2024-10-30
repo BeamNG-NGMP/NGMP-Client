@@ -7,6 +7,7 @@ local autoDisconnect = false
 local loadDefaultVehFunc = nop
 
 local function onClientPreStartMission(filename)
+  -- disconnect automatically
   if autoDisconnect and filename ~= currentLevel then
     ngmp_network.sendPacket("EX")
   end
@@ -15,13 +16,19 @@ end
 local function loadLevel(data)
   local filename = data.map_string
   if FS:fileExists(filename) then
+    -- overwrite normal defaultVehicle function
     loadDefaultVehFunc = core_levels.maybeLoadDefaultVehicle
     core_levels.maybeLoadDefaultVehicle = nop
 
     core_levels.startLevel(filename, false, function()
       autoDisconnect = true
-      ngmp_network.sendPacket("CC")
+
+      -- send a confirm to the launcher that we've loaded the map
+      ngmp_network.sendPacket("CC", {data = {data.confirm_id}})
+
       server.fadeoutLoadingScreen()
+
+      -- reset the defaultVehicle function
       core_levels.maybeLoadDefaultVehicle = loadDefaultVehFunc
     end)
   else

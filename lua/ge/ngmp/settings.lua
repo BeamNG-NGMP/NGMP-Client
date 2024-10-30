@@ -84,6 +84,8 @@ local function onExtensionLoaded()
 
   validateDefaultRec(defaultSettings, settings)
 
+  -- create an index
+  -- table lookups are faster than iterations
   categoryIndex["/"] = settings
   indexCategoriesRec("", settings)
 end

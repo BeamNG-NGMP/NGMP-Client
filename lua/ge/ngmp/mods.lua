@@ -4,9 +4,11 @@ local M = {}
 M.dependencies = {"ngmp_main"}
 
 M.modsDir = "/temp/ngmp_mods/"
+-- genuinely why would you have 2 other mp mods installed
 M.blackListedMods = {"ngmp", "translations", "kissmultiplayer", "beammp"}
 
 local cache = {}
+-- this is used to rescale the "clear mod cache" button in the settings tab
 M.totalSize = 0
 M.totalSizeGB = 0
 

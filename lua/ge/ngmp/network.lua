@@ -3,12 +3,12 @@ local M = {}
 M.dependencies = {"ngmp_main"}
 
 local ngmpUtils = rerequire("ngmp/utils")
+local socket = require("socket")
 local http = require("socket/http")
 http.TIMEOUT = 0.1
 local MAX_CONFIRM_ID = 65535
 local MAX_CONFIRM_ID_ITERATION = 20000
 
-local socket = require("socket")
 local wbp = socket.udp() -- water bucket protocol
 M.connection = {
   wbp = wbp,
@@ -36,20 +36,19 @@ local function generateConfirmID()
 end
 
 -- use registerPacketEncodeFunc to add one
-local packetEncode = {}
+-- usage:
+-- ngmp_network.sendPacket("ID", {data = {"arg1", "arg2"}})
+-- or (does not need function register):
+-- ngmp_network.sendPacket("ID", {custom = true, data = {"arg1", "arg2"}})
+local packetEncode = {
+  ["CC"] = function(customConfirmId)
+    customConfirmId = customConfirmId or generateConfirmID()
+    return {confirm_id = customConfirmId}, customConfirmId
+  end,
+}
 
-local function fromUINT16(bytes)
-  local uint = ffi.new("uint16_t[1]")
-  ffi.copy(uint, bytes, 2)
-  return uint[0]
-end
-
---[[
-only the generics are here
-use registerPacketDecodeFunc to add one
-
-- confirm id return is optional
-]]
+-- use registerPacketDecodeFunc to add one
+-- confirm id return is optional
 local packetDecode = {
   ["CC"] = function(data)
     return data.confirm_id
@@ -132,7 +131,7 @@ local function startConnection()
     local result, error = wbp:setpeername(M.connection.ip, M.connection.port)
     if result then
       M.connection.connected = true
-    elseif result then
+    elseif error then
       M.connection.errType = "Launcher peer init failed!"
       M.connection.err = error
       log("E", "startConnection", M.connection.errType)
@@ -145,9 +144,12 @@ local function startConnection()
 end
 
 local function retryConnection()
+  local sendCI = not M.connection.connected
   sendPacket("RL")
   startConnection()
-  sendPacket("CI")
+  if M.connection.connected and sendCI then
+    sendPacket("CI")
+  end
 end
 
 local function onUpdate(dt)

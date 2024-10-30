@@ -50,6 +50,8 @@ local function getAvatar(avatarHash, suffix)
 end
 
 -- Grayscale images are red?? wtf???
+-- we need to fix this. its kind of ass that theres no gpu convert function but oh well
+-- having a pfx shader would be proper overkill
 local function fixFormat(filepath, resFilepath)
   local bitmap = GBitmap()
   local resBitmap = GBitmap()
@@ -138,6 +140,8 @@ local function set(rawData)
 end
 
 local function onExtensionLoaded()
+  -- load the default and placeholder avatar images
+  -- this is returned by getAvatar when the download/import isnt finished
   for _,v in ipairs(FS:findFiles("/art/ngmp/defaultplayer/", "*.jpg\t*.png", 0, true, false)) do
     local tex = im.ImTextureHandler(v)
     local resFormat = ffi.string(tex:getFormat())

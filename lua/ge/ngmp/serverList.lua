@@ -7,7 +7,6 @@ M.favorites = {}
 M.recents = {}
 M.availableLevels = {}
 local serverList = {}
-local serverKeys = {}
 
 local filterFuncs = {
   searchQuery = function(server, ip, query)
