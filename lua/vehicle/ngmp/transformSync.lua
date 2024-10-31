@@ -6,7 +6,7 @@ local M = {
 
 M.debugDraw = true
 
-M.applyForce = 10
+M.applyForce = 14
 M.applyForceAng = 37.5
 M.timeFac = 6
 local maxForce = 15
@@ -51,12 +51,28 @@ local function forceSet(localVelDiff)
   obj:queueGameEngineLua(cmd)
 end
 
+local function forceSetPos()
+  -- this is kinda really fucking ugly
+  -- but it does work, and it works surprisingly well
+  local cmd = string.format([[
+    local veh = be:getObjectByID(%d);
+    local refNodeId = %d;
+    local rot = quat(veh:getClusterRotationSlow(refNodeId));
+    rot = rot:inversed() * quat(%s);
+    veh:setClusterPosRelRot(refNodeId, %s, rot.x, rot.y, rot.z, rot.w);
+  ]], objectId, refNodeID,
+  table.concat(received.rot:toTable(), ","),
+  table.concat(received.pos:toTable(), ","))
+
+  obj:queueGameEngineLua(cmd)
+end
+
 -- genuinely everything has to be taken *dt, otherwise we get fucked by the physics
 local function calculateVelocities(dt)
   local velDiff = received.vel-current.vel
-  --local posDiff = received.pos-current.pos
+  local posDiff = received.pos-current.pos
 
-  local linearMove = (velDiff * M.applyForce) * dt * M.timeFac
+  local linearMove = ((velDiff + posDiff) * M.applyForce) * dt * M.timeFac
   if linearMove:squaredLength() > maxForceSqr then
     linearMove = linearMove:normalized() * maxForce
   end
@@ -85,7 +101,6 @@ local function updateGFX(dt)
   if not received then return end
   if M.debugDraw then
     drawDebug()
-    return
   end
 
   local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
@@ -104,7 +119,7 @@ local function updateGFX(dt)
   else
     local linear, angular = calculateVelocities(dt)
 
-    obj:applyClusterLinearAngularAccel(refNodeID, linear*20, angular*1.25)
+    obj:applyClusterLinearAngularAccel(refNodeID, linear*20, angular*3)
   end
 end
 
@@ -128,11 +143,12 @@ end
 
 local function set(data)
   received = {
-    pos = vec3(data.pos)+vec3(0,0,0.03),
+    pos = vec3(data.pos),
     rot = quat(data.rot),
     vel = vec3(data.vel),
     rvel = vec3(data.rvel)
   }
+  forceSetPos()
 end
 
 local function onReset()

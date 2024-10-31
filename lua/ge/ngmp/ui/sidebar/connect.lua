@@ -121,8 +121,8 @@ local function renderServerlist(dt)
     im.SetWindowFontScale(0.8)
 
     im.BeginChild1("ServerListFilters##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(filtersExtensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
-    im.Indent(style.WindowPadding.x)
     im.Text("Filters")
+    im.Separator()
     if im.BeginTable("ServerListFiltersOptions##NGMPUI", 2) then
       im.TableNextColumn()
       if filterCheckbox("Empty", filters.empty) then

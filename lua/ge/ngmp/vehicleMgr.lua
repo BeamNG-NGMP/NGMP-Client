@@ -160,7 +160,7 @@ end
 local function sendVehicleData(vehFullId, vehData)
   local vehObj = M.vehsByVehFullId[vehFullId]
   if vehObj and vehObj[2].steamId == ngmp_playerData.steamId then
-    --ngmp_network.sendPacket("VU", {data = {vehObj[2], vehData}})
+    ngmp_network.sendPacket("VU", {data = {vehObj[2], vehData}})
   end
 end
 
