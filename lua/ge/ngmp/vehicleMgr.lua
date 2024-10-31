@@ -63,7 +63,7 @@ local function confirmVehicle(data)
   local objectId = data.object_id
 
   if waitingForConfirm[confirmId] == objectId then
-    local steamId = ngmp_playerData.getOwnData().steamId
+    local steamId = ngmp_playerData.steamId
     local owner = M.owners[steamId] or {}
     local vehFullId = steamId.."_"..vehId
     local veh = be:getObjectByID(objectId)
@@ -96,7 +96,7 @@ local function confirmVehicle(data)
 end
 
 local function spawnVehicle(data)
-  if data.steam_id == ngmp_playerData.getOwnData().steamId then return end
+  if data.steam_id == ngmp_playerData.steamId then return end
   local vehFullId = data.steam_id.."_"..data.vehicle_id
   local objName = "NGMP_"..vehFullId
 
@@ -146,14 +146,14 @@ end
 
 local function setVehicleTransformData(vehFullId, data)
   local veh = M.vehsByVehFullId[vehFullId]
-  if veh and veh[2].ownerId == ngmp_playerData.getOwnData().steamId then
+  if veh and veh[2].ownerId == ngmp_playerData.steamId then
     veh[1]:queueLuaCommand(string.format("ngmp_sync.set(jsonDecode(%q))", data))
   end
 end
 
 local function sendVehicleData(vehFullId, vehData)
   local veh = M.vehsByVehFullId[vehFullId]
-  if veh and veh[2].ownerId == ngmp_playerData.getOwnData().steamId then
+  if veh and veh[2].ownerId == ngmp_playerData.steamId then
     --ngmp_network.sendPacket("VU", {data = {vehObj[2], vehData}})
   end
 end
@@ -170,6 +170,8 @@ local function onNGMPInit()
     local confirm_id = ngmp_network.generateConfirmID()
     return {
       confirm_id = confirm_id,
+      steam_id = ngmp_playerData.steamId,
+      vehicle_id = 0,
       vehicle_data = data,
     }, confirm_id
   end)
