@@ -22,7 +22,7 @@ local function onVehicleSpawned(objectId, veh)
     partConfig = veh.partConfig,
     paints = veh.paints,
     pos = veh:getPosition():toTable(),
-    rot = quat(veh:getRotation()):toTable(),
+    rot = quat(veh:getRotation()):inversed():toTable(),
     object_id = objectId
   }}})] = objectId
   be:enterVehicle(0, veh)
@@ -146,8 +146,8 @@ end
 
 local function setVehicleTransformData(vehFullId, data)
   local veh = M.vehsByVehFullId[vehFullId]
-  if veh and veh[2].ownerId == ngmp_playerData.steamId then
-    veh[1]:queueLuaCommand(string.format("ngmp_sync.set(jsonDecode(%q))", data))
+  if veh then
+    veh[1]:queueLuaCommand(string.format("ngmp_transformSync.set(jsonDecode(%q))", data))
   end
 end
 
@@ -160,7 +160,7 @@ end
 
 local function sendVehicleTransformData(vehFullId, vehData)
   local vehObj = M.vehsByVehFullId[vehFullId]
-  if vehObj then
+  if vehObj and veh[2].ownerId == ngmp_playerData.steamId then
     ngmp_network.sendPacket("VT", {data = {vehObj[2], vehData}})
   end
 end

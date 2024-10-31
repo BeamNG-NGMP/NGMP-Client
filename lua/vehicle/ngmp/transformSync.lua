@@ -83,6 +83,7 @@ local function drawDebug()
 end
 
 local function updateGFX(dt)
+  dump(received)
   if not received then return end
   if M.debugDraw then
     drawDebug()
