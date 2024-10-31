@@ -13,7 +13,7 @@ local maxForce = 15
 local maxForceSqr = maxForce*maxForce
 
 local step = 0
-local stepSize = 1/50
+local stepSize = 1/25
 
 local refNodeID = 0
 local applyForceNodes = {}
@@ -82,7 +82,6 @@ local function drawDebug()
 end
 
 local function updateGFX(dt)
-  dump(received)
   if not received then return end
   if M.debugDraw then
     drawDebug()
@@ -111,23 +110,23 @@ end
 
 local function onPhysicsStep(dtPhys)
   if ngmp_sync.mode == "receive" then return end
-  local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
-  current = {
-    pos = obj:getPosition(),
-    rot = quat(obj:getRotation()),
-    vel = linearVel,
-    rvel = angularVel
-  }
 
   step = step + dtPhys
   if step > stepSize then
     step = 0
+
+    local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
+    current = {
+      pos = obj:getPosition(),
+      rot = quat(obj:getRotation()),
+      vel = linearVel,
+      rvel = angularVel
+    }
     obj:queueGameEngineLua(string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleTransformData(%q, %q) end", ngmp_sync.vehFullId, jsonEncode(get())))
   end
 end
 
 local function set(data)
-  dump(data)
   received = {
     pos = vec3(data.pos)+vec3(0,0,0.03),
     rot = quat(data.rot),
