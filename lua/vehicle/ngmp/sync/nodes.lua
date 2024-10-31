@@ -8,18 +8,16 @@ local M = {
 local function get()
   local data = {}
   for _, node in pairs(v.data.nodes) do
-    data[#data + 1] = obj:getNodePosition(node.cid):toTable()
+    data[node.cid] = obj:getNodePosition(node.cid):toTable()
   end
   return next(data) and data or nil
 end
 
 local tempVec = vec3()
 local function set(data)
-  local i = 1
-  for _, node in pairs(v.data.nodes) do
-    tempVec:set(data[i][1], data[i][2], data[i][3])
-    obj:setNodePosition(node.cid, tempVec)
-    i = i + 1
+  for nodeCid, nodePos in pairs(v.data.nodes) do
+    tempVec:set(nodePos[1], nodePos[2], nodePos[3])
+    obj:setNodePosition(nodeCid, tempVec)
   end
 end
 

@@ -143,7 +143,7 @@ local function set(data)
     vel = vec3(data.vel),
     rvel = vec3(data.rvel)
   }
-  forceSetPos()
+  --forceSetPos()
 end
 
 local function onReset()
