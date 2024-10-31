@@ -155,6 +155,8 @@ local function onExtensionLoaded()
       }
     end
   end
+
+  setExtensionUnloadMode(M, "manual")
 end
 
 local function onNGMPLogin(isLoggedIn, playerName, steamId, avatarHash)

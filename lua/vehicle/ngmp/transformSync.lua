@@ -13,7 +13,7 @@ local maxForce = 15
 local maxForceSqr = maxForce*maxForce
 
 local step = 0
-M.stepSize = 1/15
+M.stepSize = 1/20
 
 local refNodeID = 0
 local applyForceNodes = {}
@@ -112,7 +112,7 @@ local function onPhysicsStep(dtPhys)
   if ngmp_sync.mode == "receive" then return end
 
   step = step + dtPhys
-  if step > stepSize then
+  if step > M.stepSize then
     step = 0
 
     local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)

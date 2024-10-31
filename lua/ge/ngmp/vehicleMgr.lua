@@ -11,23 +11,6 @@ local queue = {}
 local waitingForConfirm = {}
 local dontSendSpawnInfo = {}
 
-local function onVehicleSpawned(objectId, veh)
-  if dontSendSpawnInfo[veh:getName()] then return end
-
-  if FS:fileExists(veh.partConfig) then
-    veh.partConfig = serialize(jsonReadFile(veh.partConfig)) or veh.partConfig
-  end
-  waitingForConfirm[ngmp_network.sendPacket("VS", {data = {{
-    Jbeam = veh.Jbeam,
-    partConfig = veh.partConfig,
-    paints = veh.paints,
-    pos = veh:getPosition():toTable(),
-    rot = quatFromDir(veh:getDirectionVector(), veh:getDirectionVectorUp()):toTable(),
-    object_id = objectId
-  }}})] = objectId
-  be:enterVehicle(0, veh)
-end
-
 local function setVehicleOwnership(steam_id, vehicle_id, object_id)
   local owner = M.owners[steam_id] or {}
   local vehFullId = steam_id.."_"..vehicle_id
@@ -49,11 +32,11 @@ local function setVehicleOwnership(steam_id, vehicle_id, object_id)
   M.owners[steam_id] = owner
   M.vehsByVehFullId[vehFullId] = {
     veh,
-    owner
+    owner[object_id]
   }
   M.vehsByObjId[object_id] = {
     veh,
-    owner
+    owner[object_id]
   }
 end
 
@@ -93,6 +76,29 @@ local function confirmVehicle(data)
 
     waitingForConfirm[confirmId] = nil
   end
+end
+
+local function onVehicleSpawned(objectId, veh)
+  if dontSendSpawnInfo[veh:getName()] then
+    local thisVeh = M.vehsByObjId[objectId]
+    if thisVeh then
+      setVehicleOwnership(thisVeh[2].steamId, thisVeh[2].vehId, thisVeh[2].vehObjId)
+    end
+    return
+  end
+
+  if FS:fileExists(veh.partConfig) then
+    veh.partConfig = serialize(jsonReadFile(veh.partConfig)) or veh.partConfig
+  end
+  waitingForConfirm[ngmp_network.sendPacket("VS", {data = {{
+    Jbeam = veh.Jbeam,
+    partConfig = veh.partConfig,
+    paints = veh.paints,
+    pos = veh:getPosition():toTable(),
+    rot = quatFromDir(veh:getDirectionVector(), veh:getDirectionVectorUp()):toTable(),
+    object_id = objectId
+  }}})] = objectId
+  be:enterVehicle(0, veh)
 end
 
 local function spawnVehicle(data)

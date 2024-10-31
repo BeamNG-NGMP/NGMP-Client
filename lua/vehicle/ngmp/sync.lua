@@ -8,12 +8,12 @@ M.modules = {}
 local modules = M.modules -- saves 1 table lookup
 
 local step = 0
-M.stepSize = 1/15
+M.stepSize = 1/20
 
 local function onPhysicsStep(dtPhys)
   if M.mode == "receive" then return end
   step = step + dtPhys
-  if step > stepSize then
+  if step > M.stepSize then
     step = 0
 
     local data = {}
