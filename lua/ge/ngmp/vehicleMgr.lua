@@ -153,14 +153,14 @@ end
 
 local function sendVehicleData(vehFullId, vehData)
   local vehObj = M.vehsByVehFullId[vehFullId]
-  if vehObj and vehObj[2].ownerId == ngmp_playerData.steamId then
+  if vehObj and vehObj[2].steamId == ngmp_playerData.steamId then
     --ngmp_network.sendPacket("VU", {data = {vehObj[2], vehData}})
   end
 end
 
 local function sendVehicleTransformData(vehFullId, vehData)
   local vehObj = M.vehsByVehFullId[vehFullId]
-  if vehObj and vehObj[2].ownerId == ngmp_playerData.steamId then
+  if vehObj and vehObj[2].steamId == ngmp_playerData.steamId then
     ngmp_network.sendPacket("VT", {data = {vehObj[2], vehData}})
   end
 end
@@ -204,9 +204,10 @@ local function onNGMPInit()
   ngmp_network.registerPacketDecodeFunc("VA", confirmVehicle)
   ngmp_network.registerPacketDecodeFunc("VR", confirmVehicle)
   ngmp_network.registerPacketDecodeFunc("VU", function(data)
-    setVehicleTransformData(data.steam_id.."_"..data.vehicle_id, data.transform)
+    setVehicleData(data.steam_id.."_"..data.vehicle_id, data.runtime_data)
   end)
   ngmp_network.registerPacketDecodeFunc("VT", function(data)
+    dump(data)
     setVehicleTransformData(data.steam_id.."_"..data.vehicle_id, data.transform)
   end)
 end

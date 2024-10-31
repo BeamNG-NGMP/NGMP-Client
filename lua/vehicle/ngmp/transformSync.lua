@@ -1,4 +1,3 @@
-
 local M = {
   name = "transforms",
   abbreviation = "t",
@@ -128,6 +127,7 @@ local function onPhysicsStep(dtPhys)
 end
 
 local function set(data)
+  dump(data)
   received = {
     pos = vec3(data.pos)+vec3(0,0,0.03),
     rot = quat(data.rot),

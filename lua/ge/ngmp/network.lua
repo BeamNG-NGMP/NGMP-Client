@@ -58,6 +58,7 @@ local packetDecode = {
 local function onReceive(data)
   local packetType = data:sub(1, 2)
 
+  dump(packetType)
   if packetType == "" then return end
   if not packetDecode[packetType] then
     -- don't know what to do? just forget about it. your problems are not there if you ignore them.
