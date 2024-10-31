@@ -203,6 +203,12 @@ local function onNGMPInit()
   ngmp_network.registerPacketDecodeFunc("VS", spawnVehicle)
   ngmp_network.registerPacketDecodeFunc("VA", confirmVehicle)
   ngmp_network.registerPacketDecodeFunc("VR", confirmVehicle)
+  ngmp_network.registerPacketDecodeFunc("VU", function(data)
+    setVehicleTransformData(data.steam_id.."_"..data.vehicle_id, data.transform)
+  end)
+  ngmp_network.registerPacketDecodeFunc("VT", function(data)
+    setVehicleTransformData(data.steam_id.."_"..data.vehicle_id, data.transform)
+  end)
 end
 
 M.onNGMPInit = onNGMPInit
