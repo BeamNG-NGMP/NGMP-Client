@@ -159,7 +159,9 @@ local function sendVehicleData(vehFullId, vehData)
 end
 
 local function sendVehicleTransformData(vehFullId, vehData)
+  dump(vehFullId)
   local vehObj = M.vehsByVehFullId[vehFullId]
+  dump(vehObj)
   if vehObj then
     ngmp_network.sendPacket("VT", {data = {vehObj[2], vehData}})
   end
@@ -183,6 +185,8 @@ local function onNGMPInit()
     }
   end)
   ngmp_network.registerPacketEncodeFunc("VT", function(ownerData, vehicleData)
+    dump(ownerData)
+    dump(vehicleData)
     return {
       steam_id = ownerData.steamId,
       transform = vehicleData,
