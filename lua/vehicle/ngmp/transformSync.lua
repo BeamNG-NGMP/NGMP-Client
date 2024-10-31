@@ -13,7 +13,7 @@ local maxForce = 15
 local maxForceSqr = maxForce*maxForce
 
 local step = 0
-local stepSize = 1/25
+local stepSize = 1/15
 
 local refNodeID = 0
 local applyForceNodes = {}
@@ -99,7 +99,7 @@ local function updateGFX(dt)
   -- fortune telling is done in launcher
 
   local localVelDiff = received.vel-current.vel
-  if current.pos:squaredDistance(received.pos) > 48 then
+  if current.pos:squaredDistance(received.pos) > 100 then
     forceSet(localVelDiff*0.75)
   else
     local linear, angular = calculateVelocities(dt)
