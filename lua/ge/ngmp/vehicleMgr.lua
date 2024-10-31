@@ -138,29 +138,29 @@ local function removeVehicle(data)
 end
 
 local function setVehicleData(vehFullId, data)
-  local veh = M.vehsByVehFullId[vehFullId]
-  if veh then
-    veh[1]:queueLuaCommand(string.format("ngmp_sync.set(jsonDecode(%q))", data))
+  local vehObj = M.vehsByVehFullId[vehFullId]
+  if vehObj then
+    vehObj[1]:queueLuaCommand(string.format("ngmp_sync.set(jsonDecode(%q))", data))
   end
 end
 
 local function setVehicleTransformData(vehFullId, data)
-  local veh = M.vehsByVehFullId[vehFullId]
-  if veh then
-    veh[1]:queueLuaCommand(string.format("ngmp_transformSync.set(jsonDecode(%q))", data))
+  local vehObj = M.vehsByVehFullId[vehFullId]
+  if vehObj then
+    vehObj[1]:queueLuaCommand(string.format("ngmp_transformSync.set(jsonDecode(%q))", data))
   end
 end
 
 local function sendVehicleData(vehFullId, vehData)
-  local veh = M.vehsByVehFullId[vehFullId]
-  if veh and veh[2].ownerId == ngmp_playerData.steamId then
+  local vehObj = M.vehsByVehFullId[vehFullId]
+  if vehObj and vehObj[2].ownerId == ngmp_playerData.steamId then
     --ngmp_network.sendPacket("VU", {data = {vehObj[2], vehData}})
   end
 end
 
 local function sendVehicleTransformData(vehFullId, vehData)
   local vehObj = M.vehsByVehFullId[vehFullId]
-  if vehObj and veh[2].ownerId == ngmp_playerData.steamId then
+  if vehObj and vehObj[2].ownerId == ngmp_playerData.steamId then
     ngmp_network.sendPacket("VT", {data = {vehObj[2], vehData}})
   end
 end
