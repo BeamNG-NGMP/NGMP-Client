@@ -60,10 +60,10 @@ local function fixFormat(filepath, resFilepath)
 
   resBitmap:init(x,y)
   local tempColor = ColorI(0,0,0,255)
-  for col=0, x-1 do
-    for row=0, y-1 do
-      bitmap:getColor(col,row,tempColor)
-      resBitmap:setColor(col,row,tempColor)
+  for row=0, x-1 do
+    for col=0, y-1 do
+      bitmap:getColor(row,col,tempColor)
+      resBitmap:setColor(row,col,tempColor)
     end
   end
   -- this literally doesn't do anything
@@ -163,6 +163,7 @@ local function onNGMPLogin(isLoggedIn, playerName, steamId, avatarHash)
     steamId = steamId,
     avatarHash = avatarHash
   }
+  M.steamId = steamId
 
   ngmp_network.registerPacketDecodeFunc("PD", set)
 end
