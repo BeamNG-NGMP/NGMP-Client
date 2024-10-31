@@ -22,7 +22,7 @@ local function onVehicleSpawned(objectId, veh)
     partConfig = veh.partConfig,
     paints = veh.paints,
     pos = veh:getPosition():toTable(),
-    rot = quat(veh:getRotation()):inversed():toTable(),
+    rot = quatFromDir(veh:getDirectionVector(), veh:getDirectionVectorUp()):toTable(),
     object_id = objectId
   }}})] = objectId
   be:enterVehicle(0, veh)
@@ -207,7 +207,6 @@ local function onNGMPInit()
     setVehicleData(data.steam_id.."_"..data.vehicle_id, data.runtime_data)
   end)
   ngmp_network.registerPacketDecodeFunc("VT", function(data)
-    dump(data)
     setVehicleTransformData(data.steam_id.."_"..data.vehicle_id, data.transform)
   end)
 end
