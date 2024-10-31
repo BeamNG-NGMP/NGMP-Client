@@ -33,7 +33,7 @@ local function setVehicleOwnership(steam_id, vehicle_id, object_id)
   local vehFullId = steam_id.."_"..vehicle_id
   local veh = be:getObjectByID(object_id)
   table.insert(owner, {
-    ownerId = steam_id,
+    steamId = steam_id,
     vehName = veh:getName(),
     vehId = vehicle_id,
     vehFullId = vehFullId,
@@ -68,7 +68,7 @@ local function confirmVehicle(data)
     local vehFullId = steamId.."_"..vehId
     local veh = be:getObjectByID(objectId)
     owner[vehId] = {
-      ownerId = steamId,
+      steamId = steamId,
       vehName = veh:getName(),
       vehFullId = vehFullId,
       vehObjId = objectId,
@@ -159,9 +159,7 @@ local function sendVehicleData(vehFullId, vehData)
 end
 
 local function sendVehicleTransformData(vehFullId, vehData)
-  dump(vehFullId)
   local vehObj = M.vehsByVehFullId[vehFullId]
-  dump(vehObj)
   if vehObj then
     ngmp_network.sendPacket("VT", {data = {vehObj[2], vehData}})
   end
@@ -185,8 +183,6 @@ local function onNGMPInit()
     }
   end)
   ngmp_network.registerPacketEncodeFunc("VT", function(ownerData, vehicleData)
-    dump(ownerData)
-    dump(vehicleData)
     return {
       steam_id = ownerData.steamId,
       transform = vehicleData,
