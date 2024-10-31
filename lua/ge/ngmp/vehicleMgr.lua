@@ -184,7 +184,7 @@ local function onNGMPInit()
   ngmp_network.registerPacketEncodeFunc("VU", function(ownerData, vehicleData)
     return {
       steam_id = ownerData.steamId,
-      transform = vehicleData,
+      runtime_data = vehicleData,
       vehicle_id = ownerData.vehId,
     }
   end)
