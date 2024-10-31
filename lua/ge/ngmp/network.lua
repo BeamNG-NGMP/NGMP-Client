@@ -1,6 +1,7 @@
 
 local M = {}
 M.dependencies = {"ngmp_main"}
+M.debugPrint = false
 
 local ngmpUtils = rerequire("ngmp/utils")
 local socket = require("socket")
@@ -57,6 +58,10 @@ local packetDecode = {
 
 local function onReceive(data)
   local packetType = data:sub(1, 2)
+
+  if M.debugPrint then
+    log("D", "onReceive", string.format("Packet Received! Type: %s", packetType))
+  end
 
   if packetType == "" then return end
   if not packetDecode[packetType] then
