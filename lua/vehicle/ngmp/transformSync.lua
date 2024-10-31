@@ -13,7 +13,7 @@ local maxForce = 15
 local maxForceSqr = maxForce*maxForce
 
 local step = 0
-local stepSize = 1/15
+M.stepSize = 1/15
 
 local refNodeID = 0
 local applyForceNodes = {}
