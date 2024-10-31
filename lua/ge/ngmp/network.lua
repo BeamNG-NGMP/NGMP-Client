@@ -1,7 +1,8 @@
 
 local M = {}
 M.dependencies = {"ngmp_main"}
-M.debugPrint = false
+M.debugPrintIn = false
+M.debugPrintOut = false
 
 local ngmpUtils = rerequire("ngmp/utils")
 local socket = require("socket")
@@ -10,6 +11,7 @@ http.TIMEOUT = 0.1
 local MAX_CONFIRM_ID = 65535
 local MAX_CONFIRM_ID_ITERATION = 20000
 
+local recBuffer
 local wbp = socket.udp() -- water bucket protocol
 M.connection = {
   wbp = wbp,
@@ -59,7 +61,7 @@ local packetDecode = {
 local function onReceive(data)
   local packetType = data:sub(1, 2)
 
-  if M.debugPrint then
+  if M.debugPrintIn then
     log("D", "onReceive", string.format("Packet Received! Type: %s", packetType))
   end
 
@@ -111,6 +113,11 @@ local function sendPacket(packetType, context)
     end
   end
 
+  if M.debugPrintOut then
+    log("D", "sendPacket", string.format("Packet to send! Type: %s", packetType))
+    log("D", "sendPacket", string.format("Data: %s", data))
+  end
+
   local len = ffi.string(ffi.new("uint32_t[1]", {#data}), 4)
   wbp:send(packetType..len..data)
 
@@ -158,10 +165,12 @@ end
 local function onUpdate(dt)
   if not M.connection.connected then return end
 
-  local buf = wbp:receive()
-  if buf and buf ~= "" then
-    onReceive(buf)
-  end
+  repeat
+    recBuffer = wbp:receive()
+    if recBuffer and recBuffer ~= "" then
+        onReceive(recBuffer)
+    end
+  until recBuffer == "" or not recBuffer
 end
 
 local function httpGet(url)
