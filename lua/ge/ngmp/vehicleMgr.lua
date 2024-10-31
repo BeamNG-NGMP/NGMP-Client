@@ -82,7 +82,7 @@ local function onVehicleSpawned(objectId, veh)
   if dontSendSpawnInfo[veh:getName()] then
     local thisVeh = M.vehsByObjId[objectId]
     if thisVeh then
-      setVehicleOwnership(thisVeh[2].steamId, thisVeh[2].vehId, thisVeh[2].vehObjId)
+      --setVehicleOwnership(thisVeh[2].steamId, thisVeh[2].vehId, thisVeh[2].vehObjId)
     end
     return
   end
