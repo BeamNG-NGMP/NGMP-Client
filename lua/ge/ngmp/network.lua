@@ -89,14 +89,15 @@ end
 
 local function sendPacket(packetType, context)
   if not M.connection.connected then return end
+  context = context or {}
 
-  local data
-  local confirmId
-  if context and context.custom then
+  local data, confirmId
+  if context.custom then
     data = jsonEncode(context.data) or ""
   else
     if packetEncode[packetType] then
-      data, confirmId = packetEncode[packetType](context and unpack(context.data))
+      -- this ends up with the arguments in the input array split into actual arguments for the function
+      data, confirmId = packetEncode[packetType](unpack(context.data or {}))
       data = jsonEncode(data) -- non-json packets are not supported
     else
       -- Whoops, doesn't exists lol
