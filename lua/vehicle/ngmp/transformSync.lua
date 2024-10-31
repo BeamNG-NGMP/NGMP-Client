@@ -130,14 +130,9 @@ local function onPhysicsStep(dtPhys)
   if step > M.stepSize then
     step = 0
 
-    local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
-    current = {
-      pos = obj:getPosition(),
-      rot = quat(obj:getRotation()),
-      vel = linearVel,
-      rvel = angularVel
-    }
-    obj:queueGameEngineLua(string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleTransformData(%q, %q) end", ngmp_sync.vehFullId, jsonEncode(get())))
+    obj:queueGameEngineLua(
+        string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleTransformData(%q, %q) end",
+        ngmp_sync.vehFullId, jsonEncode(get())))
   end
 end
 
