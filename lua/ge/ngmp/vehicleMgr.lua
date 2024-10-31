@@ -146,7 +146,7 @@ end
 local function setVehicleData(vehFullId, data)
   local vehObj = M.vehsByVehFullId[vehFullId]
   if vehObj then
-    vehObj[1]:queueLuaCommand(string.format("ngmp_sync.set(lpack.decode(%q))", data))
+    vehObj[1]:queueLuaCommand(string.format("ngmp_sync.set(jsonDecode(%q))", data))
   end
 end
 

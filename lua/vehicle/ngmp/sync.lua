@@ -21,7 +21,7 @@ local function onPhysicsStep(dtPhys)
       data[modules[i].abbreviation] = modules[i].get()
     end
 
-    obj:queueGameEngineLua(string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleData(%q, %q) end", M.vehFullId, lpack.encode(data)))
+    obj:queueGameEngineLua(string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleData(%q, %q) end", M.vehFullId, jsonEncode(data)))
   end
 end
 
