@@ -5,18 +5,6 @@ local M = {
   author = "DaddelZeit (NGMP Official)"
 }
 
--- this shit is actually in doubles but floats are close enough and half as big
-local function doubleToBytes(num)
-  if not num then return end
-  return ffi.string(ffi.new("float[1]", num), 4)
-end
-
-local tmpFloat = ffi.new("float[1]")
-local function bytesToFloat(str)
-  ffi.copy(tmpFloat, str, 4)
-  return tmpFloat[0]
-end
-
 local abbreviations = {
   combustionEngine = "e",
   frictionClutch = "c",
@@ -49,12 +37,12 @@ local powertrainSyncFuncsGet = {
   combustionEngine = function(device)
     if not device.thermals then return end
     return {
-      doubleToBytes(device.thermals.cylinderWallTemperature),
-      doubleToBytes(device.thermals.oilTemperature),
-      doubleToBytes(device.thermals.engineBlockTemperature),
-      doubleToBytes(device.thermals.exhaustTemperature),
-      doubleToBytes(device.thermals.coolantTemperature),
-      device.compressionBrakeCoefDesired > 0 and doubleToBytes(device.compressionBrakeCoefDesired) or nil,
+      device.thermals.cylinderWallTemperature,
+      device.thermals.oilTemperature,
+      device.thermals.engineBlockTemperature,
+      device.thermals.exhaustTemperature,
+      device.thermals.coolantTemperature,
+      device.compressionBrakeCoefDesired > 0 and device.compressionBrakeCoefDesired or nil,
     }
   end,
   -- should be handled in electrics
@@ -95,14 +83,14 @@ end
 
 local powertrainSyncFuncsSet = {
   combustionEngine = function(device, data)
-    device.thermals.cylinderWallTemperature = bytesToFloat(data[1])
-    device.thermals.oilTemperature = bytesToFloat(data[2])
-    device.thermals.engineBlockTemperature = bytesToFloat(data[3])
-    device.thermals.exhaustTemperature = bytesToFloat(data[4])
-    device.thermals.coolantTemperature = bytesToFloat(data[5])
+    device.thermals.cylinderWallTemperature = data[1]
+    device.thermals.oilTemperature = data[2]
+    device.thermals.engineBlockTemperature = data[3]
+    device.thermals.exhaustTemperature = data[4]
+    device.thermals.coolantTemperature = data[5]
 
     if device.compressionBrakeCoefDesired ~= device.NGMP_lastCompressionBrake then
-      device:setCompressionBrakeCoef(data[6] and bytesToFloat(data[6]) or 0)
+      device:setCompressionBrakeCoef(data[6] and data[6] or 0)
       device.NGMP_lastCompressionBrake = device.compressionBrakeCoefDesired
     end
   end,
@@ -148,8 +136,5 @@ M.get = get
 M.addPowertrainSyncFunc = addPowertrainSyncFunc
 M.applyPowertrainOverride = applyPowertrainOverride
 M.onExtensionLoaded = onExtensionLoaded
-
-M.doubleToBytes = doubleToBytes
-M.bytesToFloat = bytesToFloat
 
 return M
