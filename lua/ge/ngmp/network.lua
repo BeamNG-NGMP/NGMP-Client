@@ -145,12 +145,9 @@ local function startConnection()
 end
 
 local function retryConnection()
-  local sendCI = not M.connection.connected
   sendPacket("RL")
   startConnection()
-  if M.connection.connected and sendCI then
-    sendPacket("CI")
-  end
+  sendPacket("CI")
 end
 
 local function onUpdate(dt)
