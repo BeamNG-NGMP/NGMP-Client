@@ -9,8 +9,8 @@ M.debugDraw = true
 M.current = {}
 M.received = {}
 
-M.applyForce = 36
-M.applyForceAng = 37.5
+M.applyForce = 45
+M.applyForceAng = 45
 M.timeFac = 6
 local maxForce = 15
 local maxForceSqr = maxForce*maxForce
@@ -118,12 +118,12 @@ local function updateGFX(dt)
   -- fortune telling is done in launcher
 
   local localVelDiff = received.vel-current.vel
-  if current.pos:squaredDistance(received.pos) > 100 or current.rot:distance(received.rot) > 0.24 then
-    forceSet(localVelDiff*0.75)
+  if current.pos:squaredDistance(received.pos) > 75 or current.rot:distance(received.rot) > 0.25 then
+    forceSet(localVelDiff*0.85)
   else
     local linear, angular = calculateVelocities(dt)
 
-    obj:applyClusterLinearAngularAccel(refNodeID, linear*20, angular*3)
+    obj:applyClusterLinearAngularAccel(refNodeID, linear*20, angular*4)
   end
 end
 
