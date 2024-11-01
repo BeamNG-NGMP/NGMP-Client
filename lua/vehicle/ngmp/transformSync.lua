@@ -9,7 +9,7 @@ M.debugDraw = true
 M.current = {}
 M.received = {}
 
-M.applyForce = 32
+M.applyForce = 36
 M.applyForceAng = 37.5
 M.timeFac = 6
 local maxForce = 15
@@ -28,7 +28,7 @@ local function get()
   local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
   local transform = {
     pos = obj:getPosition():toTable(),
-    rot = {obj:getClusterRotationSlow(refNodeID)},
+    rot = {obj:getRotation()},
     vel = linearVel:toTable(),
     rvel = angularVel:toTable()
   }
@@ -36,31 +36,36 @@ local function get()
   return transform
 end
 
-local function forceSet(localVelDiff, rotationDiff)
+local function forceSet(localVelDiff)
   -- this is kinda really fucking ugly
   -- but it does work, and it works surprisingly well
   local cmd = string.format([[
     local veh = be:getObjectByID(%d);
     local refNodeId = %d;
-    veh:setClusterPosRelRot(refNodeId, %s, %s);
+    local rot = quat(veh:getClusterRotationSlow(refNodeId));
+    rot = rot:inversed() * quat(%s);
+    veh:setClusterPosRelRot(refNodeId, %s, rot.x, rot.y, rot.z, rot.w);
     veh:applyClusterVelocityScaleAdd(refNodeId, 0.5, %s)
   ]], objectId, refNodeID,
+  table.concat(received.rot:toTable(), ","),
   table.concat(received.pos:toTable(), ","),
-  table.concat(rotationDiff:toTable(), ","),
   table.concat(localVelDiff:toTable(), ","))
 
   obj:queueGameEngineLua(cmd)
 end
 
-local function forceSetPos(rotationDiff)
+local function forceSetPos()
   -- this is kinda really fucking ugly
   -- but it does work, and it works surprisingly well
   local cmd = string.format([[
     local veh = be:getObjectByID(%d);
-    veh:setClusterPosRelRot(%d, %s, %s);
+    local refNodeId = %d;
+    local rot = quat(veh:getClusterRotationSlow(refNodeId));
+    rot = rot:inversed() * quat(%s);
+    veh:setClusterPosRelRot(refNodeId, %s, rot.x, rot.y, rot.z, rot.w)
   ]], objectId, refNodeID,
-  table.concat(received.pos:toTable(), ","),
-  table.concat(rotationDiff:toTable(), ","))
+  table.concat(received.rot:toTable(), ","),
+  table.concat(received.pos:toTable(), ","))
 
   obj:queueGameEngineLua(cmd)
 end
@@ -104,7 +109,7 @@ local function updateGFX(dt)
   local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
   current = {
     pos = obj:getPosition(),
-    rot = obj:getClusterRotationSlow(refNodeID),
+    rot = quat(obj:getRotation()),
     vel = linearVel,
     rvel = angularVel
   }
@@ -113,9 +118,8 @@ local function updateGFX(dt)
   -- fortune telling is done in launcher
 
   local localVelDiff = received.vel-current.vel
-  if current.pos:squaredDistance(received.pos) > 100 or current.rot:distance(received.rot) > 35 then
-    local rotationDiff = current.rot:inversed() * received.rot
-    forceSet(localVelDiff*0.75, rotationDiff)
+  if current.pos:squaredDistance(received.pos) > 100 or current.rot:distance(received.rot) > 0.24 then
+    forceSet(localVelDiff*0.75)
   else
     local linear, angular = calculateVelocities(dt)
 
@@ -144,7 +148,6 @@ local function set(data)
     rvel = vec3(data.rvel)
   }
   M.received = received
-  --forceSetPos()
 end
 
 local function onReset()
