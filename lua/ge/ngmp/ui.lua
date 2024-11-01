@@ -129,7 +129,7 @@ local function onUpdate(dtReal, dtSim, dtRaw)
   style.push()
   local success, error = pcall(extensions.hook, "onNGMPUI", dtReal, dtSim, dtRaw, mainSizePos)
   if not success then
-    log("E", "", error)
+    log("E", "ngmp.ui.onNGMPUI.hook", error)
   end
   style.pop()
 

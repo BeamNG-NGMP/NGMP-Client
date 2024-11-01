@@ -32,7 +32,7 @@ local function loadLevel(data)
       core_levels.maybeLoadDefaultVehicle = loadDefaultVehFunc
     end)
   else
-    log("E", "loadLevel", "Level does not exist!")
+    log("E", "ngmp.levelMgr.loadLevel", "Level does not exist!")
   end
 end
 

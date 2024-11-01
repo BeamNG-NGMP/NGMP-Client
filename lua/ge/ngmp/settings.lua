@@ -12,7 +12,7 @@ local saveTimer = 0
 local function validateDefaultRec(tbl, settingsTbl)
   for k,v in pairs(tbl) do
     if settingsTbl[k] == nil then
-      log("W", "settings", "Settings key not found, setting default: "..tostring(k))
+      log("W", "ngmp.settings.validate", "Settings key not found, setting default: "..tostring(k))
       settingsTbl[k] = v
     end
     if type(v) == "table" then
