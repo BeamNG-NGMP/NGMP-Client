@@ -231,6 +231,7 @@ local function updateGFX()
     lastElectrics[k] = v
     k = getKey(k)
     getData[k] = v
+    ::next::
   end
 end
 
