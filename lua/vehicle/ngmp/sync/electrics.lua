@@ -5,18 +5,6 @@ local M = {
   author = "DaddelZeit (NGMP Official)"
 }
 
--- this shit is actually in doubles but floats are close enough and half as big
-local function doubleToBytes(num)
-  if not num then return end
-  return ffi.string(ffi.new("float[1]", num), 4)
-end
-
-local tmpFloat = ffi.new("float[1]")
-local function bytesToFloat(str)
-  ffi.copy(tmpFloat, str, 4)
-  return tmpFloat[0]
-end
-
 local electricsIgnoreTbl = {
   -- this is entirely irrelevant
   accXSmooth = true,
@@ -224,13 +212,7 @@ local revAbbreviations = require("ngmp/utils").switchKeysAndValues(abbreviations
 ]]
 
 local lastElectrics = {}
-
-local getData = {
-  n = {},
-  s = {},
-  b = {},
-  t = {}
-}
+local getData = {}
 
 local function get()
   local ret = next(getData) and getData or nil
@@ -243,44 +225,12 @@ local function getKey(fullKey)
 end
 
 local function updateGFX()
-  getData = {
-    n = {},
-    s = {},
-    b = {},
-    t = {}
-  }
+  getData = {}
   for k,v in pairs(electrics.values) do
     if electricsIgnoreTbl[k] or lastElectrics[k] == v then goto next end
     lastElectrics[k] = v
     k = getKey(k)
-    if type(v) == "number" then
-      if v%1 ~= 0 then
-        getData.n[k] = doubleToBytes(v)
-      else
-        getData.n[k] = v
-      end
-    elseif type(v) == "string" then
-      getData.s[k] = v
-    elseif type(v) == "boolean" then
-      getData.b[k] = v and 1 or 0
-    elseif type(v) == "table" then
-      getData.t[k] = v
-    end
-
-    ::next::
-  end
-
-  if not next(getData.n) then
-    getData.n = nil
-  end
-  if not next(getData.s) then
-    getData.s = nil
-  end
-  if not next(getData.b) then
-    getData.b = nil
-  end
-  if not next(getData.t) then
-    getData.t = nil
+    getData[k] = v
   end
 end
 
@@ -337,29 +287,8 @@ end
 
 local function set(rawData)
   local data = {}
-  if rawData.n then
-    for k,v in pairs(rawData.n) do
-      if type(v) == "string" then
-        data[getKeyBack(k)] = bytesToFloat(v)
-      else
-        data[getKeyBack(k)] = v
-      end
-    end
-  end
-  if rawData.s then
-    for k,v in pairs(rawData.s) do
-      data[getKeyBack(k)] = v
-    end
-  end
-  if rawData.b then
-    for k,v in pairs(rawData.b) do
-      data[getKeyBack(k)] = (v == 1)
-    end
-  end
-  if rawData.t then
-    for k,v in pairs(rawData.t) do
-      data[getKeyBack(k)] = v
-    end
+  for k,v in pairs(rawData) do
+    data[getKeyBack(k)] = v
   end
 
   for key,val in pairs(data) do
