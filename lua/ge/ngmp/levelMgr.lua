@@ -13,8 +13,7 @@ local function onClientPreStartMission(filename)
   end
 end
 
-local function loadLevel(data)
-  local filename = data.map_string
+local function loadLevel(confirm_id, filename)
   if FS:fileExists(filename) then
     -- overwrite normal defaultVehicle function
     loadDefaultVehFunc = core_levels.maybeLoadDefaultVehicle
@@ -24,7 +23,7 @@ local function loadLevel(data)
       autoDisconnect = true
 
       -- send a confirm to the launcher that we've loaded the map
-      ngmp_network.sendPacket("CC", {data = {data.confirm_id}})
+      ngmp_network.sendPacket("CC", {data = {confirm_id}})
 
       server.fadeoutLoadingScreen()
 
@@ -36,11 +35,6 @@ local function loadLevel(data)
   end
 end
 
-local function onNGMPInit()
-  ngmp_network.registerPacketDecodeFunc("LM", loadLevel)
-end
-
-M.onNGMPInit = onNGMPInit
 M.onClientPreStartMission = onClientPreStartMission
 M.loadLevel = loadLevel
 

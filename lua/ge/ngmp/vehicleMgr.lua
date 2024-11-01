@@ -78,6 +78,18 @@ local function confirmVehicle(data)
   end
 end
 
+local function deleteVehicle(data)
+  local ownerData = M.owners[data.steam_id]
+  if ownerData and ownerData[data.vehicle_id] then
+    local vehData = ownerData[data.vehicle_id]
+    M.vehsByVehFullId[vehData.vehFullId] = nil
+    M.vehsByObjId[vehData.vehObjId] = nil
+    vehData.veh:delete()
+
+    ownerData[data.vehicle_id] = nil
+  end
+end
+
 local function onVehicleSpawned(objectId, veh)
   if dontSendSpawnInfo[veh:getName()] then
     local thisVeh = M.vehsByObjId[objectId]
@@ -99,6 +111,7 @@ local function onVehicleSpawned(objectId, veh)
     object_id = objectId
   }}})] = objectId
   be:enterVehicle(0, veh)
+  commands.setGameCamera()
 end
 
 local function spawnVehicle(data)
@@ -127,20 +140,17 @@ local function spawnVehicle(data)
   setVehicleOwnership(data.steam_id, data.vehicle_id, veh:getID())
 end
 
-local function removeVehicle(data)
-  local vehId = data.vehicle_id
-  local steamId = data.steam_id
-  local owner = M.owners[steamId] or {}
-  local vehFullId = steamId.."_"..vehId
-  local veh = M.vehsByVehFullId[vehFullId]
+local function onVehicleDestroyed(vid)
+  local veh = M.vehsByObjId[vid]
+  if veh and veh[2] and veh[2].steamId == ngmp_playerData.steamId then
+    local ownerData = M.owners[veh[2].steamId]
+    local vehData = veh[2]
+    ngmp_network.sendPacket("VR", {data = {ownerData}})
 
-  veh:delete()
-
-  owner[vehId] = nil
-  M.vehsByVehFullId[vehFullId] = nil
-  M.vehsByObjId[veh:getID()] = nil
-
-  M.owners[steamId] = owner
+    M.vehsByVehFullId[vehData.vehFullId] = nil
+    M.vehsByObjId[vehData.vehObjId] = nil
+    ownerData[vehData.vehId] = nil
+  end
 end
 
 local function setVehicleData(vehFullId, data)
@@ -171,7 +181,7 @@ local function sendVehicleTransformData(vehFullId, vehData)
   end
 end
 
-local function onNGMPInit()
+local function onExtensionLoaded()
   ngmp_network.registerPacketEncodeFunc("VS", function(data)
     local confirm_id = ngmp_network.generateConfirmID()
     return {
@@ -180,6 +190,12 @@ local function onNGMPInit()
       vehicle_id = 0,
       vehicle_data = data,
     }, confirm_id
+  end)
+  ngmp_network.registerPacketEncodeFunc("VR", function(ownerData)
+    return {
+      steam_id = ownerData.steamId,
+      vehicle_id = ownerData.vehId,
+    }
   end)
   ngmp_network.registerPacketEncodeFunc("VU", function(ownerData, vehicleData)
     return {
@@ -208,7 +224,7 @@ local function onNGMPInit()
 
   ngmp_network.registerPacketDecodeFunc("VS", spawnVehicle)
   ngmp_network.registerPacketDecodeFunc("VA", confirmVehicle)
-  ngmp_network.registerPacketDecodeFunc("VR", confirmVehicle)
+  ngmp_network.registerPacketDecodeFunc("VR", deleteVehicle)
   ngmp_network.registerPacketDecodeFunc("VU", function(data)
     setVehicleData(data.steam_id.."_"..data.vehicle_id, data.runtime_data)
   end)
@@ -217,7 +233,7 @@ local function onNGMPInit()
   end)
 end
 
-M.onNGMPInit = onNGMPInit
+M.onExtensionLoaded = onExtensionLoaded
 
 M.sendVehicleTransformData = sendVehicleTransformData
 M.sendVehicleData = sendVehicleData
@@ -227,9 +243,10 @@ M.setVehicleData = setVehicleData
 M.confirmVehicle = confirmVehicle
 M.setVehicleOwnership = setVehicleOwnership
 
-M.removeVehicle = removeVehicle
+M.deleteVehicle = deleteVehicle
 M.spawnVehicle = spawnVehicle
 
 M.onVehicleSpawned = onVehicleSpawned
+M.onVehicleDestroyed = onVehicleDestroyed
 
 return M

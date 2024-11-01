@@ -27,17 +27,21 @@ M.extensionLoadList = {
 
   -- then the helper stuff...
   "ngmp_settings",
-  "ngmp_mods",
   "ngmp_playerData",
   "ngmp_serverList",
-
-  -- the managers...
-  "ngmp_levelMgr",
-  "ngmp_vehicleMgr",
 
   -- ui goes last
   "ngmp_ui",
   "ngmp_ui_sidebar",
+}
+
+-- this is only loaded when joining a server and unloaded when leaving
+-- switching servers causes a reload
+M.serverExtensionList = {
+  -- the managers...
+  "ngmp_levelMgr",
+  "ngmp_vehicleMgr",
+  "ngmp_modMgr",
 }
 
 local function setLogin(data)
@@ -57,11 +61,23 @@ local function setBridgeConnected(data)
 end
 
 local function disconnect(err)
+  for i=1, #M.serverExtensionList do
+    extensions.unload(M.serverExtensionList[i])
+  end
+
   if err then
     -- connection fail!
   else
     -- connection ended
   end
+end
+
+local function connect(data)
+  for i=1, #M.serverExtensionList do
+    extensions.load(M.serverExtensionList[i])
+  end
+
+  ngmp_levelMgr.loadLevel(data.confirm_id, data.map_string)
 end
 
 local function kicked(reason)
@@ -101,6 +117,8 @@ local function onUpdate()
       ip_address = finalIp or M.connection.ip..":"..M.connection.serverPort
     }
   end)
+
+  ngmp_network.registerPacketDecodeFunc("LM", connect)
 
   -- startup after *all* modules are loaded
   extensions.hook("onNGMPInit")
