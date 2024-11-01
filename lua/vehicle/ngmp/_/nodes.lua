@@ -14,11 +14,16 @@ local function get()
   return data
 end
 
+
 local tempVec = vec3()
 local function set(data)
   for nodeCid, nodePos in pairs(data) do
     tempVec:set(nodePos[1], nodePos[2], nodePos[3])
-    obj:setNodePosition(nodeCid-1, tempVec)
+    local setToPos = tempVec
+    setToPos.x = round(setToPos.x*10000)/10000
+    setToPos.y = round(setToPos.y*10000)/10000
+    setToPos.z = round(setToPos.z*10000)/10000
+    obj:setNodePosition(nodeCid-1, ngmp_transformSync.received.pos-ngmp_transformSync.current.pos+setToPos)
 
     local beam = v.data.beams[nodeCid]
     local beamPrecompression = beam.beamPrecompression or 1
