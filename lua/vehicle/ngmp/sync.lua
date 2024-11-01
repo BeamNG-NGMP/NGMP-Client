@@ -36,6 +36,7 @@ end
 
 local function onExtensionLoaded()
   extensions.reload("ngmp_transformSync")
+  modules = {}
   for _,v in ipairs(FS:findFiles(modulePath, "*.lua", 0)) do
     local extName = v:match("^.+vehicle/(.+)%.lua"):gsub("/", "_")
     extensions.reload(extName)

@@ -10,6 +10,7 @@ local function get()
   for _, node in pairs(v.data.nodes) do
     data[tonumber(node.cid)+1] = obj:getNodePosition(node.cid):toTable()
   end
+  dump("A")
   return data
 end
 
