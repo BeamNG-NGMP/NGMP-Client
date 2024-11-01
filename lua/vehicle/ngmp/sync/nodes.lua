@@ -10,12 +10,12 @@ local function get()
   for _, node in pairs(v.data.nodes) do
     data[node.cid] = obj:getNodePosition(node.cid):toTable()
   end
-  return next(data) and data or nil
+  return data
 end
 
 local tempVec = vec3()
 local function set(data)
-  for nodeCid, nodePos in pairs(v.data.nodes) do
+  for nodeCid, nodePos in pairs(data) do
     tempVec:set(nodePos[1], nodePos[2], nodePos[3])
     obj:setNodePosition(nodeCid, tempVec)
   end
