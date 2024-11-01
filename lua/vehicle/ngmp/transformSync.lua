@@ -28,7 +28,7 @@ local function get()
   local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
   local transform = {
     pos = obj:getPosition():toTable(),
-    rot = obj:getClusterRotationSlow(refNodeID):toTable(),
+    rot = {obj:getClusterRotationSlow(refNodeID)},
     vel = linearVel:toTable(),
     rvel = angularVel:toTable()
   }
