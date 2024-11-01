@@ -5,16 +5,14 @@ M.debugPrintIn = false
 M.debugPrintOut = false
 
 local ngmpUtils = rerequire("ngmp/utils")
-local socket = require("socket")
+
 local http = require("socket/http")
 http.TIMEOUT = 0.1
 local MAX_CONFIRM_ID = 65535
 local MAX_CONFIRM_ID_ITERATION = 20000
 
-local recBuffer
-local wbp = socket.udp() -- water bucket protocol
+local socket = rerequire("ngmp/netWrapper/tcp")
 M.connection = {
-  wbp = wbp,
   connected = false,
   timeout = 0,
   ip = "127.0.0.1",
@@ -24,6 +22,7 @@ M.connection = {
   errType = "",
   err = "",
 }
+socket.init(M.connection)
 
 local confirmIdCache = {}
 local function generateConfirmID()
@@ -58,30 +57,27 @@ local packetDecode = {
   end,
 }
 
-local function onReceive(data)
-  local packetType = data:sub(1, 2)
-
+local function onReceive(packetType, data)
   if M.debugPrintIn then
-    log("D", "onReceive", string.format("Packet Received! Type: %s", packetType))
+    log("D", "ngmp.network.onReceive", string.format("Packet Received! Type: %s", packetType))
   end
 
-  if packetType == "" then return end
   if not packetDecode[packetType] then
     -- don't know what to do? just forget about it. your problems are not there if you ignore them.
-    log("E", "onReceive", string.format("Received packet of type %s is either unknown or not registered.", packetType))
+    log("E", "ngmp.network.onReceive", string.format("Received packet of type %s is either unknown or not registered.", packetType))
     return
   end
 
-  local packetLengthRaw = data:sub(3, 6)
+  local packetLengthRaw = socket.receive(4)
   local packetLength = ngmpUtils.ffiConvertNumber(packetLengthRaw, 4)
 
-  local rawData = data:sub(7)
+  local rawData = socket.receive(packetLength)
   if rawData:len() == packetLength then
     -- non-json packets are not supported
     local success, jsonData = pcall(jsonDecode, rawData)
     if not success then
-      log("E", "onReceive", "Error during jsonDecode:")
-      log("E", "onReceive", jsonData)
+      log("E", "ngmp.network.onReceive", "Error during jsonDecode:")
+      log("E", "ngmp.network.onReceive", jsonData)
       return
     end
 
@@ -90,7 +86,7 @@ local function onReceive(data)
       confirmIdCache[confirmId] = true
     end
   else
-    log("E", "onReceive", string.format("Received packet of type %s does not match length! Expected: %d bytes, received: %d bytes.", packetType, packetLength, rawData:len()))
+    log("E", "ngmp.network.onReceive", string.format("Received packet of type %s does not match length! Expected: %d bytes, received: %d bytes.", packetType, packetLength, rawData:len()))
   end
 end
 
@@ -108,72 +104,53 @@ local function sendPacket(packetType, context)
       data = jsonEncode(data) -- non-json packets are not supported
     else
       -- Whoops, doesn't exists lol
-      log("E", "sendPacket", string.format("Packet of type %s was not declared as custom and an encode function does not exist.", packetType))
+      log("E", "ngmp.network.sendPacket", string.format("Packet of type %s was not declared as custom and an encode function does not exist.", packetType))
       return
     end
   end
 
   if M.debugPrintOut then
-    log("D", "sendPacket", string.format("Packet to send! Type: %s", packetType))
-    log("D", "sendPacket", string.format("Data: %s", data))
+    log("D", "ngmp.network.sendPacket", string.format("Packet to send! Type: %s", packetType))
+    log("D", "ngmp.network.sendPacket", string.format("Data: %s", data))
   end
 
-  local len = ffi.string(ffi.new("uint32_t[1]", {#data}), 4)
-  wbp:send(packetType..len..data)
+  local err = socket.send(packetType, data)
+  if err then
+    log("D", "ngmp.network.sendPacket", string.format("Packet of type %s failed to send!", packetType))
+    log("D", "ngmp.network.sendPacket", string.format("Error: %s", err))
+  end
 
   return confirmId
 end
 
 local function startConnection()
-  if M.connection.connected then return end
-
-  wbp:settimeout(M.connection.timeout)
-
-  do
-    local result, error = wbp:setsockname(M.connection.ip, M.connection.clientPort)
-    if error then
-      M.connection.errType = "Client socket init failed!"
-      M.connection.err = error
-      log("E", "startConnection", M.connection.errType)
-      log("E", "startConnection", error)
-      return false
-    end
+  if socket.connect(M.connection) then
+    sendPacket("CI")
+  else
+    log("W", "ngmp.network.startConnection", "Connection failed! See above for error.")
   end
-
-  do
-    local result, error = wbp:setpeername(M.connection.ip, M.connection.port)
-    if result then
-      M.connection.connected = true
-    elseif error then
-      M.connection.errType = "Launcher peer init failed!"
-      M.connection.err = error
-      log("E", "startConnection", M.connection.errType)
-      log("E", "startConnection", error)
-      return false
-    end
-  end
-
-  sendPacket("CI")
 end
 
 local function retryConnection()
+  log("D", "ngmp.network.retryConnection", "Attempting connection retry.")
   sendPacket("RL")
   startConnection()
-  sendPacket("CI")
 end
 
 local function onUpdate(dt)
   if not M.connection.connected then return end
 
+  local packetType
   repeat
-    recBuffer = wbp:receive()
-    if recBuffer and recBuffer ~= "" then
-        onReceive(recBuffer)
+    packetType = socket.receive(2)
+    if packetType then
+      onReceive(packetType)
     end
-  until recBuffer == "" or not recBuffer
+  until not packetType
 end
 
 local function httpGet(url)
+  log("D", "ngmp.network.httpGet", string.format("Sending HTTP GET request to %s", url))
   return http.request("http://127.0.0.1:4434/external/"..url)
 end
 
@@ -190,8 +167,7 @@ local function onExtensionLoaded()
 end
 
 local function onExtensionUnloaded()
-  if not M.connection.connected then return end
-  wbp:close()
+  socket.disconnect()
 end
 
 M.onUpdate = onUpdate
