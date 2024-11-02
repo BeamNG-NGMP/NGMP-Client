@@ -4,7 +4,7 @@ M.dependencies = {"ngmp_main", "ngmp_network", "ngmp_settings"}
 
 local currentLevel = ""
 local autoDisconnect = false
-local loadDefaultVehFunc = nop
+local loadConfirmId
 
 local function onClientPreStartMission(filename)
   -- disconnect automatically
@@ -13,29 +13,26 @@ local function onClientPreStartMission(filename)
   end
 end
 
+local function onClientPostStartMission()
+  if loadConfirmId then
+    autoDisconnect = true
+
+    -- send a confirm to the launcher that we've loaded the map
+    ngmp_network.sendPacket("CC", {data = {loadConfirmId}})
+  end
+end
+
 local function loadLevel(confirm_id, filename)
+  loadConfirmId = confirm_id
   if FS:fileExists(filename) then
-    -- overwrite normal defaultVehicle function
-    loadDefaultVehFunc = core_levels.maybeLoadDefaultVehicle
-    core_levels.maybeLoadDefaultVehicle = nop
-
-    core_levels.startLevel(filename, false, function()
-      autoDisconnect = true
-
-      -- send a confirm to the launcher that we've loaded the map
-      ngmp_network.sendPacket("CC", {data = {confirm_id}})
-
-      server.fadeoutLoadingScreen()
-
-      -- reset the defaultVehicle function
-      core_levels.maybeLoadDefaultVehicle = loadDefaultVehFunc
-    end)
+    core_levels.startLevel(filename, nil, nil, false)
   else
     log("E", "ngmp.levelMgr.loadLevel", "Level does not exist!")
   end
 end
 
 M.onClientPreStartMission = onClientPreStartMission
+M.onClientPostStartMission = onClientPostStartMission
 M.loadLevel = loadLevel
 
 return M
