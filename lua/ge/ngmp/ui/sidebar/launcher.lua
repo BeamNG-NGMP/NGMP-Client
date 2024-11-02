@@ -54,17 +54,18 @@ local function render(dt)
     if feedbackExtensionSmoother:get(feedbackTargetSize, dt) >= 0.5 then
       im.SetCursorPosY(im.GetWindowHeight()-math.ceil(feedbackExtensionSmoother.state)-3)
       im.BeginChild1("ConnectionFeedback##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(feedbackExtensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
-      im.Indent(style.WindowPadding.x)
 
-      im.PushFont3("consola_regular")
-      im.SetWindowFontScale(0.8)
+      im.PushTextWrapPos(im.GetContentRegionAvailWidth())
+      im.PushFont3("robotomono_regular")
+      im.SetWindowFontScale(0.75)
       im.Text("Error Report")
       im.Separator()
       im.SetWindowFontScale(0.75)
       im.Text(ngmp_network.connection.errType)
-      im.Text("Error: "..ngmp_network.connection.err)
+      im.Text("\""..ngmp_network.connection.err.."\"")
       im.SetWindowFontScale(1)
       im.PopFont()
+      im.PopTextWrapPos()
 
       if feedbackTargetSize ~= 0 then
         feedbackTargetSize = im.GetCursorPosY()
