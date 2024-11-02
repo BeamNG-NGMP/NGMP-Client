@@ -51,7 +51,7 @@ local function updateDownloadState(modName, progress)
   end
 end
 
-local function onExtensionLoaded()
+local function onNGMPInit()
   setExtensionUnloadMode(M, "manual")
   refreshCache()
 
@@ -65,7 +65,7 @@ local function onExtensionLoaded()
   end)
 end
 
-M.onExtensionLoaded = onExtensionLoaded
+M.onNGMPInit = onNGMPInit
 M.refreshCache = refreshCache
 M.updateDownloadState = updateDownloadState
 

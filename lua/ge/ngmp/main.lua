@@ -30,6 +30,9 @@ M.extensionLoadList = {
   "ngmp_playerData",
   "ngmp_serverList",
 
+  -- modMgr is somewhat needed for UI beforehand
+  "ngmp_modMgr",
+
   -- ui goes last
   "ngmp_ui",
   "ngmp_ui_sidebar",
@@ -41,7 +44,6 @@ M.serverExtensionList = {
   -- the managers...
   "ngmp_levelMgr",
   "ngmp_vehicleMgr",
-  "ngmp_modMgr",
 }
 
 local function setLogin(data)
