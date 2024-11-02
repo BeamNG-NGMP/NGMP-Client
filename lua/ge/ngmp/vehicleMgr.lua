@@ -233,7 +233,24 @@ local function onExtensionLoaded()
   end)
 end
 
+local function getVehicleByRay(ray)
+  local smallestDist, smallestRes = math.huge, nil
+  for _, vehObj in pairs(M.vehsByObjId) do
+    local obb = vehObj[1]:getSpawnWorldOOBB()
+
+    local halfExt = obb:getHalfExtents()
+    local dist = intersectsRay_OBB(ray.pos, ray.dir, obb:getCenter(), halfExt.x*obb:getAxis(0), halfExt.y*obb:getAxis(1), halfExt.z*obb:getAxis(2))
+
+    if dist < smallestDist then
+      smallestDist, smallestRes = dist, vehObj
+    end
+  end
+
+  return smallestRes
+end
+
 M.onExtensionLoaded = onExtensionLoaded
+M.getVehicleByRay = getVehicleByRay
 
 M.sendVehicleTransformData = sendVehicleTransformData
 M.sendVehicleData = sendVehicleData

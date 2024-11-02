@@ -14,6 +14,10 @@ local texObjs = {}
 local placeHolderTexObj = {}
 local downloadedAvatarThisFrame = false
 
+local mouseFocusedPlayerPopupName = "Vehicle Owner Detail View##NGMPUI"
+local mouseFocusedPlayerData
+local mouseFocusedPlayerWindowPos
+
 -- suffix is either nothing or "", "medium", or "full"
 local function getAvatar(avatarHash, suffix)
   if avatarHash == "" then return end
@@ -73,31 +77,35 @@ local function fixFormat(filepath, resFilepath)
   resBitmap:saveFile(resFilepath)
 end
 
-local function renderTooltip(steamId)
+local function renderData(playerData)
   local style = im.GetStyle()
+  local avatar = ngmp_playerData.getAvatar(playerData.avatarHash, "full")
+  local sizeFac = ngmp_ui.getPercentVecX(1.25, false, true)/avatar.size.x
+  local size = ngmp_ui.mulVec2Num(avatar.size, sizeFac)
+
+  im.BeginGroup()
+  im.Image(avatar.texId, size)
+  im.SameLine()
+  im.SetCursorPosX(im.GetCursorPosX()+style.WindowPadding.x)
+  im.PushFont3("cairo_bold")
+  im.Text(playerData.name)
+  im.PopFont()
+  im.EndGroup()
+
+  if ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"}) then
+    im.PushFont3("cairo_regular")
+    im.SetWindowFontScale(0.8)
+    im.Text(playerData.steamId)
+    im.SetWindowFontScale(1)
+    im.PopFont()
+  end
+end
+
+local function renderTooltip(steamId)
   local playerData = M.playerDataById[steamId] or ((ownData and ownData.steamId == steamId) and ownData)
   if playerData then
     im.BeginTooltip()
-    local avatar = ngmp_playerData.getAvatar(playerData.avatarHash, "medium")
-    local sizeFac = ngmp_ui.getPercentVecX(1.25, false, true)/avatar.size.x
-    local size = ngmp_ui.mulVec2Num(avatar.size, sizeFac)
-
-    im.BeginGroup()
-    im.Image(avatar.texId, size)
-    im.SameLine()
-    im.SetCursorPosX(im.GetCursorPosX()+style.WindowPadding.x)
-    im.PushFont3("cairo_bold")
-    im.Text(playerData.name)
-    im.PopFont()
-    im.EndGroup()
-
-    if ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"}) then
-      im.PushFont3("cairo_regular")
-      im.SetWindowFontScale(0.8)
-      im.Text(playerData.steamId)
-      im.SetWindowFontScale(1)
-      im.PopFont()
-    end
+    renderData(playerData)
     im.EndTooltip()
   end
 end
@@ -113,6 +121,31 @@ local function onUpdate(dt)
     end
     convertQueue = {}
     downloadedAvatarThisFrame = false
+  end
+
+  if ngmp_vehicleMgr and ngmp_settings.get("vehicleTooltips", {"ui", "generic"}) == 1 then
+    -- right mouse
+    if im.IsMouseClicked(1) then
+      mouseFocusedPlayerWindowPos = im.GetMousePos()
+      local vehData = ngmp_vehicleMgr.getVehicleByRay(getCameraMouseRay())
+      if vehData and vehData[2] then
+        mouseFocusedPlayerData = M.playerDataById[vehData[2].steamId]
+      else
+        mouseFocusedPlayerData = nil
+      end
+    elseif im.IsMouseClicked(0) then
+      mouseFocusedPlayerData = nil
+    end
+
+    if mouseFocusedPlayerData then
+      im.BeginPopup(mouseFocusedPlayerPopupName)
+      renderData(mouseFocusedPlayerData)
+      im.EndPopup()
+
+      if not im.IsPopupOpen(mouseFocusedPlayerPopupName) then
+        im.OpenPopup1(mouseFocusedPlayerPopupName)
+      end
+    end
   end
 end
 

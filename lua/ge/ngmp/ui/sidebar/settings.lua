@@ -7,25 +7,41 @@ local M = {
 
 local im = ui_imgui
 
+local vehicleTooltipsLookup = {
+  [0] = "Always Show Text",
+  [1] = "Show on Right Click",
+  [2] = "Never Show"
+}
 local tabs = {
   {
     name = "User Interface",
     render = function()
       do
         local boolPtr = im.BoolPtr(ngmp_settings.get("closeOnLeftClickOutOfArea", {"ui", "sidebar"}))
-        im.PushFont3("cairo_bold")
         if im.Checkbox("Close sidebar on click beside", boolPtr) then
           ngmp_settings.set("closeOnLeftClickOutOfArea", boolPtr[0], {"ui", "sidebar"})
         end
-        im.PopFont()
       end
       do
+        if im.BeginCombo("Level", vehicleTooltipsLookup[ngmp_settings.get("vehicleTooltips", {"ui", "generic"})]) then
+          im.SetWindowFontScale(0.7)
+          for i=0, 2 do
+            if im.Selectable1(vehicleTooltipsLookup[i]) then
+              ngmp_settings.set("vehicleTooltips", i, {"ui", "generic"})
+            end
+          end
+          im.SetWindowFontScale(1)
+          im.EndCombo()
+        end
+      end
+      im.Dummy(im.ImVec2(0,0))
+      im.Text("Chat")
+      im.Separator()
+      do
         local boolPtr = im.BoolPtr(ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"}))
-        im.PushFont3("cairo_bold")
         if im.Checkbox("Always show SteamID in user popup", boolPtr) then
           ngmp_settings.set("alwaysSteamIDonHover", boolPtr[0], {"ui", "generic"})
         end
-        im.PopFont()
       end
     end,
     lastCursorPosY = 0,
@@ -35,9 +51,9 @@ local tabs = {
   {
     name = "Mod Cache",
     render = function()
-      im.Text(("Cache Size: %.1fGB"):format(ngmp_mods.totalSizeGB))
+      im.Text(("%.1fGB used"):format(ngmp_modMgr.totalSizeGB))
       im.PushFont3("cairo_bold")
-      ngmp_ui.primaryButton("Clear Cache", im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeightWithSpacing()*math.max(ngmp_mods.totalSizeGB or 1, 1)))
+      ngmp_ui.primaryButton("Clear Cache", im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeightWithSpacing()*math.max(ngmp_modMgr.totalSizeGB or 1, 1)))
       im.PopFont()
     end,
     lastCursorPosY = 0,
