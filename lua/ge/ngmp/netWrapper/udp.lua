@@ -9,7 +9,9 @@ local receiveBuffer = ""
 -- close connection
 M.disconnect = function(connection)
   udp:close()
-  connection.connected = false
+  if connection then
+    connection.connected = false
+  end
 end
 
 -- start connection

@@ -8,7 +8,9 @@ local tcp
 -- close connection
 M.disconnect = function(connection)
   tcp:close()
-  connection.connected = false
+  if connection then
+    connection.connected = false
+  end
 end
 
 -- start connection
@@ -18,22 +20,21 @@ M.connect = function(connection)
     M.disconnect(connection)
   end
 
-  tcp:settimeout(connection.timeout)
+  tcp:settimeout(0.1)
 
-  do
-    local result, error = tcp:connect(connection.ip, connection.port)
-    if result then
-      connection.connected = true
-      return result
-    elseif error then
-      connection.errType = "Launcher connection!"
-      connection.err = error
-      log("E", "ngmp.netWrapper.tcp.connect", connection.errType)
-      log("E", "ngmp.netWrapper.tcp.connect", error)
-      return false
-    else
-      return nil
-    end
+  local result, error = tcp:connect(connection.ip, connection.port)
+  tcp:settimeout(connection.timeout)
+  if result then
+    connection.connected = true
+    return result
+  elseif error then
+    connection.errType = "Launcher connection failed!"
+    connection.err = error
+    log("E", "ngmp.netWrapper.tcp.connect", connection.errType)
+    log("E", "ngmp.netWrapper.tcp.connect", error)
+    return false
+  else
+    return nil
   end
 end
 
