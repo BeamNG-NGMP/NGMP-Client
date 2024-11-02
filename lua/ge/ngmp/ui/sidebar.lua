@@ -106,8 +106,8 @@ local function onNGMPUI(dt)
   local windowWidth = ngmp_ui.getPercentVecX(100)-ngmp_ui.getPercentVecX(99-windowTargetWidthPercent)
   local windowHeight = ngmp_ui.getPercentVecY(100)-ngmp_ui.getPercentVecY(10)
 
-  -- Hide this during gameplay to avoid obstructing the viewport.
-  -- Obviously it should still show up when the mouse is somewhere near it.
+  -- hide this during gameplay to avoid obstructing the viewport
+  -- obviously it should still show up when the mouse is somewhere near it
   local mouseNearArea = cursorVisible and im.GetMousePos().x > ngmp_ui.getPercentVecX(99-windowTargetWidthPercent)
 
   im.PushStyleVar1(im.StyleVar_Alpha, math.min(fadeSmoother:get((worldReadyState ~= 2 or state == "opening" or state == "open" or state == "closing" or (state == "closed" and mouseNearArea)) and 1 or 0, dt), 1))
@@ -154,6 +154,7 @@ local function onNGMPUI(dt)
     local centerPos = ngmp_ui.getPercentVec(99.5-extensionX, 50)
     local animState = (extensionXSmoother.state-0.5)*-2
 
+    -- not using graphics here because we're just cool like that
     drawArrow(drawlist, ngmp_ui.addVec2(centerPos, im.ImVec2(math.sin(arrowMovementTimer)*ngmp_ui.uiscale + ngmp_ui.uiscale*3, 0)), animState*ngmp_ui.getPercentVecX(0.25, false, true), ngmp_ui.getPercentVecY(0.6, false, true))
     drawArrow(drawlist, ngmp_ui.addVec2(centerPos, im.ImVec2(math.sin(arrowMovementTimer)*ngmp_ui.uiscale - ngmp_ui.uiscale*3, 0)), animState*ngmp_ui.getPercentVecX(0.25, false, true), ngmp_ui.getPercentVecY(0.6, false, true))
   end
@@ -173,7 +174,7 @@ end
 
 local function openTab(modulePath, openOnSpawn)
   if not FS:fileExists(modulePath) then
-    error("NGMPUI: Sidebar attempted to load not existing extension module. If you are a mod developer, verify the path.")
+    log("E", "ngmp.ui.sidebar.openTab", "Sidebar attempted to load not existing extension module. If you are a mod developer, verify the path.")
     return
   end
 

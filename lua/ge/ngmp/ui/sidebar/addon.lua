@@ -43,7 +43,7 @@ end
 
 local function open(modulePath)
   if not FS:fileExists(modulePath) then
-    error("NGMPUI Addon: Sidebar tab attempted to load not existing extension module. If you are a mod developer, verify the path.")
+    log("E", "ngmp.ui.sidebar.addon.open", "Sidebar tab attempted to load not existing extension module. If you are a mod developer, verify the path.")
     return false
   end
 
