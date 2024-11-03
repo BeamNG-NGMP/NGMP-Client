@@ -18,7 +18,7 @@ local tabs = {
     render = function()
       do
         local boolPtr = im.BoolPtr(ngmp_settings.get("closeOnLeftClickOutOfArea", {"ui", "sidebar"}))
-        if im.Checkbox("Close sidebar on click beside", boolPtr) then
+        if ngmp_ui.checkbox("Close sidebar on click beside", boolPtr) then
           ngmp_settings.set("closeOnLeftClickOutOfArea", boolPtr[0], {"ui", "sidebar"})
         end
       end
@@ -28,7 +28,7 @@ local tabs = {
         if im.BeginCombo("Name Tooltips", vehicleTooltipsLookup[vehTooltip]) then
           im.SetWindowFontScale(0.7)
           for i=0, 2 do
-            if im.Selectable1(vehicleTooltipsLookup[i]) then
+            if ngmp_ui.Selectable1(vehicleTooltipsLookup[i]) then
               ngmp_settings.set("vehicleTooltips", i, {"ui", "generic"})
             end
           end
@@ -39,13 +39,13 @@ local tabs = {
       if vehTooltip == 0 then
         do
           local boolPtr = im.BoolPtr(ngmp_settings.get("fade", {"ui", "vehicleTooltip", "1"}))
-          if im.Checkbox("Fade Names by Distance", boolPtr) then
+          if ngmp_ui.checkbox("Fade Names by Distance", boolPtr) then
             ngmp_settings.set("fade", boolPtr[0], {"ui", "vehicleTooltip", "1"})
           end
         end
         do
           local boolPtr = im.BoolPtr(ngmp_settings.get("hideBehind", {"ui", "vehicleTooltip", "1"}))
-          if im.Checkbox("Hide Names Behind Objects", boolPtr) then
+          if ngmp_ui.checkbox("Hide Names Behind Objects", boolPtr) then
             ngmp_settings.set("hideBehind", boolPtr[0], {"ui", "vehicleTooltip", "1"})
           end
         end
@@ -55,7 +55,7 @@ local tabs = {
       im.Separator()
       do
         local boolPtr = im.BoolPtr(ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"}))
-        if im.Checkbox("Always show SteamID in user popup", boolPtr) then
+        if ngmp_ui.checkbox("Always show SteamID in user popup", boolPtr) then
           ngmp_settings.set("alwaysSteamIDonHover", boolPtr[0], {"ui", "generic"})
         end
       end

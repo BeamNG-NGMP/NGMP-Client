@@ -4,7 +4,7 @@ local M = {}
 local im = ui_imgui
 M.dependencies = {"ngmp_main", "ngmp_network", "ngmp_settings"}
 
-local ownData = {}
+local ownData
 M.playerDataById = {}
 M.playerData = {}
 M.cacheDir = "/temp/ngmp_playercache/"

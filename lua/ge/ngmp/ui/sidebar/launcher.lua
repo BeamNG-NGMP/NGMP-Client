@@ -23,13 +23,13 @@ local function render(dt)
   im.SetCursorPosX(center.x)
   im.SetCursorPosY(center.y)
 
-  im.PushFont3("cairo_regular_medium")
   im.SetWindowFontScale(1.75)
+  im.PushFont3("cairo_regular_medium")
   im.SetCursorPosX(center.x-im.CalcTextSize("Uh-Oh!").x/2)
   im.SetCursorPosY(im.GetCursorPosY()-im.GetTextLineHeightWithSpacing()*1.8)
   im.Text("Uh-Oh!")
-  im.SetWindowFontScale(1)
   im.PopFont()
+  im.SetWindowFontScale(1)
 
   if router then
     local sizeFac = ngmp_ui.getPercentVecX(4, false, true)/router.size.x

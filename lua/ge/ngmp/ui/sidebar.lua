@@ -128,7 +128,6 @@ local function onNGMPUI(dt)
 
     renderTabHeader(drawlist, pos3, pos4, windowWidth)
 
-    im.SetWindowFontScale(1)
     im.BeginChild1("Sidebar Content##NGMPUI", im.ImVec2(windowWidth - style.WindowPadding.x, windowHeight-im.GetCursorPosY()-5), false, im.WindowFlags_NoBackground+im.WindowFlags_NoScrollbar)
     if tabs[currentTab] then
       tabs[currentTab].render(dt)

@@ -85,7 +85,18 @@ local function getPercentVecY(input, useWindow, addPos)
   return (input/100*size.y)+pos.y
 end
 
-local function primaryButton(string_label, ImVec2_size)
+-- custom ui widgets
+local buttonStates = {}
+local function playbuttonSound(prev, curr)
+  if prev == curr then return end
+  if prev == 0 and curr == 1 then
+    ui_audio.playEventSound("bng_click_hover_generic", "focus")
+  elseif prev == 1 and curr == 2 then
+    ui_audio.playEventSound("bng_click_hover_generic", "click")
+  end
+end
+
+function M.primaryButton(string_label, ImVec2_size)
   if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
   if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
   C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
@@ -93,21 +104,79 @@ local function primaryButton(string_label, ImVec2_size)
   local retVal = C.imgui_Button(string_label, ImVec2_size)
   C.imgui_PopStyleColor(1)
   C.imgui_PopStyleVar(1)
+
+  local buttonState = 0
   if C.imgui_IsItemHovered(0) then
     C.imgui_SetMouseCursor(im.MouseCursor_Hand)
+    buttonState = 1
   end
+  if retVal then buttonState = 2 end
+
+  playbuttonSound(buttonStates[string_label], buttonState)
+  buttonStates[string_label] = buttonState
   return retVal
 end
 
-local function button(string_label, ImVec2_size)
+function M.button(string_label, ImVec2_size)
   if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
   if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
   C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
   local retVal = C.imgui_Button(string_label, ImVec2_size)
   C.imgui_PopStyleVar(1)
+
+  local buttonState = 0
   if C.imgui_IsItemHovered(0) then
     C.imgui_SetMouseCursor(im.MouseCursor_Hand)
+    buttonState = 1
   end
+  if retVal then buttonState = 2 end
+
+  playbuttonSound(buttonStates[string_label], buttonState)
+  buttonStates[string_label] = buttonState
+  return retVal
+end
+
+function M.checkbox(string_label, bool_v)
+  if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Checkbox' cannot be nil, as the c type is 'const char *'") ; return end
+  if bool_v == nil then log("E", "", "Parameter 'bool_v' of function 'Checkbox' cannot be nil, as the c type is 'bool *'") ; return end
+
+  local retVal = C.imgui_Checkbox(string_label, bool_v)
+  if retVal then
+    ui_audio.playEventSound("bng_checkbox_generic", "click")
+  end
+  return retVal
+end
+
+function M.Selectable1(string_label, bool_selected, ImGuiSelectableFlags_flags, ImVec2_size)
+  if bool_selected == nil then bool_selected = false end
+  if ImGuiSelectableFlags_flags == nil then ImGuiSelectableFlags_flags = 0 end
+  if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
+  if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Selectable1' cannot be nil, as the c type is 'const char *'") ; return end
+
+  local retVal = C.imgui_Selectable1(string_label, bool_selected, ImGuiSelectableFlags_flags, ImVec2_size)
+  if retVal then
+    ui_audio.playEventSound("bng_click_generic_small", "click")
+  end
+
+  return retVal
+end
+
+function M.button(string_label, ImVec2_size)
+  if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
+  if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
+  C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
+  local retVal = C.imgui_Button(string_label, ImVec2_size)
+  C.imgui_PopStyleVar(1)
+
+  local buttonState = 0
+  if C.imgui_IsItemHovered(0) then
+    C.imgui_SetMouseCursor(im.MouseCursor_Hand)
+    buttonState = 1
+  end
+  if retVal then buttonState = 2 end
+
+  playbuttonSound(buttonStates[string_label], buttonState)
+  buttonStates[string_label] = buttonState
   return retVal
 end
 
@@ -117,23 +186,31 @@ local function calculateButtonSize(text)
 end
 --
 
-local function onUpdate(dtReal, dtSim, dtRaw)
+local function onUpdate(_, dtReal, dtSim, dtRaw)
   --timer:reset()
   local size = split(core_settings_graphic.selected_resolution, " ")
   mainSizePos[1] = im.ImVec2(tonumber(size[1]), tonumber(size[2]))
   mainSizePos[2] = im.GetMainViewport().Pos
+
+  local prevUIScale = im.uiscale[0]
   M.uiscale = math.max(mainSizePos[1].x/1920, mainSizePos[1].y/1080) * im.GetWindowDpiScale()
 
-  imguiUtils.changeUIScale(M.uiscale)
-
   style.push()
-  local success, error = pcall(extensions.hook, "onNGMPUI", dtReal, dtSim, dtRaw, mainSizePos)
-  if not success then
-    log("E", "ngmp.ui.onNGMPUI.hook", error)
-  end
-  style.pop()
 
-  imguiUtils.changeUIScale(1)
+  imguiUtils.changeUIScale(M.uiscale)
+  im.PushFont3("segoeui_regular") -- update font size
+
+  do
+    local success, error = pcall(extensions.hook, "onNGMPUI", dtReal, dtSim, dtRaw, mainSizePos)
+    if not success then
+      log("E", "ngmp.ui.onNGMPUI.hook", error)
+    end
+  end
+
+  imguiUtils.changeUIScale(prevUIScale)
+  im.PopFont() -- reset font size
+
+  style.pop()
 
   --local time = timer:stop()
   --dump("Render took: "..time.." ms / "..(time*0.001).." s")
@@ -158,10 +235,6 @@ M.getGlobalVecY = getGlobalVecY
 M.getPercentVec = getPercentVec
 M.getPercentVecX = getPercentVecX
 M.getPercentVecY = getPercentVecY
-
--- custom ui widgets
-M.primaryButton = primaryButton
-M.button = button
 
 -- helper stuff
 M.calculateButtonSize = calculateButtonSize

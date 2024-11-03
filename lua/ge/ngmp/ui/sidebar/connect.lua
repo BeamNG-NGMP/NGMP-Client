@@ -142,12 +142,12 @@ local function renderServerlist(dt)
       im.TableNextColumn()
       if im.BeginCombo("Level", filters.level or "All") then
         im.SetWindowFontScale(0.7)
-        if im.Selectable1("All") then
+        if ngmp_ui.Selectable1("All") then
           filters.level = false
           filtersChanged = true
         end
         for i=1, #ngmp_serverList.availableLevels do
-          if im.Selectable1(ngmp_serverList.availableLevels[i][1]) then
+          if ngmp_ui.Selectable1(ngmp_serverList.availableLevels[i][1]) then
             filters.level = ngmp_serverList.availableLevels[i][1]
             filtersChanged = true
           end
