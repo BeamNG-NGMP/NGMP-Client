@@ -63,6 +63,7 @@ local function setValue(key, value, cats)
 
   writeTbl[key] = value
   saveTimer = saveTime
+  extensions.hook("onNGMPSettingsChanged")
 end
 
 local function save()

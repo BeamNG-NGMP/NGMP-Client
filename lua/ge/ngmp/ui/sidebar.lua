@@ -22,6 +22,8 @@ local cursorVisibility = true
 local cursorVisible = true
 local cursorLocked = false
 
+local settingCloseOnLeftClickOutOfArea = true
+
 -- if index is 0 that means no tab is open
 local function switchTab(index)
   if tabs[currentTab] and tabs[currentTab].onDisable then
@@ -133,7 +135,7 @@ local function onNGMPUI(dt)
     end
     im.EndChild()
 
-    if not mouseNearArea and ngmp_settings.get("closeOnLeftClickOutOfArea", {"ui", "sidebar"}) and im.IsMouseClicked(0) then
+    if not mouseNearArea and settingCloseOnLeftClickOutOfArea and im.IsMouseClicked(0) then
       state = "closing"
     end
   end
@@ -248,8 +250,13 @@ local function onNGMPLauncherConnect()
   openTab("/lua/ge/ngmp/ui/sidebar/login.lua", true)
 end
 
+local function onNGMPSettingsChanged()
+  settingCloseOnLeftClickOutOfArea = ngmp_settings.get("closeOnLeftClickOutOfArea", {"ui", "sidebar"})
+end
+
 local function onExtensionLoaded()
   setExtensionUnloadMode(M, "manual")
+  onNGMPSettingsChanged()
   openTab("/lua/ge/ngmp/ui/sidebar/launcher.lua", true)
 end
 
@@ -269,6 +276,7 @@ M.onCursorVisibilityChanged = onCursorVisibilityChanged
 M.onNGMPUI = onNGMPUI
 M.onNGMPLogin = onNGMPLogin
 M.onNGMPLauncherConnect = onNGMPLauncherConnect
+M.onNGMPSettingsChanged = onNGMPSettingsChanged
 M.onExtensionLoaded = onExtensionLoaded
 
 -- outside functions
