@@ -25,14 +25,19 @@ end
 local function loadLevel(confirm_id, filename)
   loadConfirmId = confirm_id
   if FS:fileExists(filename) then
-    core_levels.startLevel(filename, nil, nil, false)
+    freeroam_freeroam.startFreeroam(filename, nil, nil, false)
   else
     log("E", "ngmp.levelMgr.loadLevel", "Level does not exist!")
   end
 end
 
+local function onExtensionLoaded()
+  setExtensionUnloadMode(M, "manual")
+end
+
 M.onClientPreStartMission = onClientPreStartMission
 M.onClientPostStartMission = onClientPostStartMission
 M.loadLevel = loadLevel
+M.onExtensionLoaded = onExtensionLoaded
 
 return M

@@ -25,11 +25,11 @@ local function set(data)
   input.event("steering", data[5], 2, 0, 0)
 end
 
-local function onExtensionLoaded()
+local function init(mode, vehFullId)
 end
 
 M.set = set
 M.get = get
-M.onExtensionLoaded = onExtensionLoaded
+M.init = init
 
 return M

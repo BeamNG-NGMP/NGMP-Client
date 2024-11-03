@@ -15,6 +15,8 @@ local abbreviations = {
 }
 local abbreviationsRev = require("ngmp/utils").switchKeysAndValues(abbreviations)
 
+-- this is intended to be used to remove simulated damage
+-- stuff like overtorque, etc.
 local powertrainOverrides = {
   combustionEngine = function(device)
     device.maxPhysicalAV = math.huge
@@ -123,10 +125,12 @@ local function applyPowertrainOverride(device, func)
   func(device)
 end
 
-local function onExtensionLoaded()
-  for deviceType, func in pairs(powertrainOverrides) do
-    for _,device in ipairs(powertrain.getDevicesByType(deviceType)) do
-      applyPowertrainOverride(device, func)
+local function init(mode, vehFullId)
+  if mode == "receive" then
+    for deviceType, func in pairs(powertrainOverrides) do
+      for _,device in ipairs(powertrain.getDevicesByType(deviceType)) do
+        applyPowertrainOverride(device, func)
+      end
     end
   end
 end
@@ -135,6 +139,6 @@ M.set = set
 M.get = get
 M.addPowertrainSyncFunc = addPowertrainSyncFunc
 M.applyPowertrainOverride = applyPowertrainOverride
-M.onExtensionLoaded = onExtensionLoaded
+M.init = init
 
 return M

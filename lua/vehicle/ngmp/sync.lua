@@ -45,6 +45,9 @@ local function onExtensionLoaded()
     if not ext.abbreviation then
       ext.abbreviation = ext.name
     end
+    if ext.init then
+      init(M.mode, M.vehFullId)
+    end
   end
 
   enablePhysicsStepHook()

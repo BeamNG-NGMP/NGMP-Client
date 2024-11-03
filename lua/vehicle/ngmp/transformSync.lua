@@ -23,19 +23,6 @@ local applyForceNodes = {}
 
 local received
 local current
-local function get()
-  -- this is the REF NODE TRANSFORM
-  local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
-  local transform = {
-    pos = obj:getPosition():toTable(),
-    rot = {obj:getRotation()},
-    vel = linearVel:toTable(),
-    rvel = angularVel:toTable()
-  }
-
-  return transform
-end
-
 local function forceSet(localVelDiff)
   -- this is kinda really fucking ugly
   -- but it does work, and it works surprisingly well
@@ -106,19 +93,10 @@ local function updateGFX(dt)
     drawDebug()
   end
 
-  local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
-  current = {
-    pos = obj:getPosition(),
-    rot = quat(obj:getRotation()),
-    vel = linearVel,
-    rvel = angularVel
-  }
-  M.current = current
-
   -- fortune telling is done in launcher
 
   local localVelDiff = received.vel-current.vel
-  if current.pos:squaredDistance(received.pos) > 75 or current.rot:distance(received.rot) > 0.25 then
+  if current.pos:squaredDistance(received.pos) > 75 then
     forceSet(localVelDiff*0.85)
   else
     local linear, angular = calculateVelocities(dt)
@@ -128,15 +106,28 @@ local function updateGFX(dt)
 end
 
 local function onPhysicsStep(dtPhys)
-  if ngmp_sync.mode == "receive" then return end
+  local linearVel, angularVel = obj:getClusterVelocityAngVelWithoutWheels(refNodeID)
+  current = {
+    pos = obj:getPosition(),
+    rot = quat(obj:getRotation()),
+    vel = linearVel,
+    rvel = angularVel
+  }
+  M.current = current
 
+  if ngmp_sync.mode == "receive" then return end
   step = step + dtPhys
   if step > M.stepSize then
     step = 0
 
     obj:queueGameEngineLua(
         string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleTransformData(%q, %q) end",
-        ngmp_sync.vehFullId, jsonEncode(get())))
+        ngmp_sync.vehFullId, jsonEncode({
+          pos = current.pos:toTable(),
+          rot = current.rot:toTable(),
+          vel = current.vel:toTable(),
+          rvel = current.rvel:toTable()
+        })))
   end
 end
 

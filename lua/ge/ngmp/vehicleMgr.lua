@@ -182,6 +182,7 @@ local function sendVehicleTransformData(vehFullId, vehData)
 end
 
 local function onExtensionLoaded()
+  setExtensionUnloadMode(M, "manual")
   ngmp_network.registerPacketEncodeFunc("VS", function(data)
     local confirm_id = ngmp_network.generateConfirmID()
     return {
@@ -246,7 +247,7 @@ local function getVehicleByRay(ray)
     end
   end
 
-  return smallestRes
+  return smallestRes, smallestDist
 end
 
 M.onExtensionLoaded = onExtensionLoaded

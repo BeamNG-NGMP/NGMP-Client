@@ -8,32 +8,42 @@ local M = {
 local function get()
   local data = {}
   for _, node in pairs(v.data.nodes) do
-    local pos = obj:getNodePosition(node.cid)
-    data[tonumber(node.cid)+1] = obj:getNodeVelocityVector(node.cid):toTable()
+    data[tonumber(node.cid)] = obj:getNodePosition(node.cid):toTable()
   end
   return data
 end
 
-local tempVec = vec3()
+local receivedNodes
 local function set(data)
-  for nodeCid, nodePos in pairs(data) do
-    tempVec:set(nodePos[1], nodePos[2], nodePos[3])
+  receivedNodes = data
+end
 
-    --[[
-    local setToPos = tempVec
-    setToPos.x = round(setToPos.x*10000)/10000
-    setToPos.y = round(setToPos.y*10000)/10000
-    setToPos.z = round(setToPos.z*10000)/10000
-    obj:setNodePosition(nodeCid-1, ngmp_transformSync.received.pos-ngmp_transformSync.current.pos+setToPos)
-    ]]
+local newNodePos = vec3()
+local function onPhysicsStep(dt)
+  -- there's a *lot* of iterations down below,
+  -- we need to save as many table lookups as we can
+  local lerp = ngmp_transformSync.stepSize
+  local receiveTransform = ngmp_transformSync.received
+  local currentTransform = ngmp_transformSync.current
+  if not receivedNodes or not receiveTransform or not currentTransform then return end
+
+  for nodeCid = 0, tableSizeC(receivedNodes) do
+    local nodePos = receivedNodes[nodeCid]
+    local prevNodePos = currentTransform.pos+obj:getNodePosition(nodeCid)
+
+    newNodePos:set(nodePos[1], nodePos[2], nodePos[3])
+    newNodePos = receiveTransform.pos+newNodePos
+
+    obj:setNodePosition(nodeCid, (prevNodePos-newNodePos)*lerp)
   end
 end
 
-local function onExtensionLoaded()
+local function init(mode, vehFullId)
 end
 
 M.set = set
 M.get = get
-M.onExtensionLoaded = onExtensionLoaded
+M.onPhysicsStep = onPhysicsStep
+M.init = init
 
 return M

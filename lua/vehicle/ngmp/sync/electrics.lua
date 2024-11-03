@@ -305,7 +305,7 @@ local function addGetApplyFunc(key, func)
   applyFunctions[key] = func
 end
 
-local function onExtensionLoaded()
+local function init(mode, vehFullId)
   -- add airbrakes and stuff to the blocked list
   for k,v in ipairs(controller.getControllersByType("pneumatics/airbrakes")) do
     electricsIgnoreTbl[v.name.."_pressure_service"] = true
@@ -326,7 +326,7 @@ end
 M.updateGFX = updateGFX
 M.set = set
 M.get = get
-M.onExtensionLoaded = onExtensionLoaded
+M.init = init
 M.addGetApplyFunc = addGetApplyFunc
 
 M.doubleToBytes = doubleToBytes

@@ -4,6 +4,12 @@
       "alwaysSteamIDonHover": false,
       "vehicleTooltips": 1
     },
+    "vehicleTooltip": {
+      "1": {
+        "fade": true,
+        "hideBehind": false
+      }
+    },
     "sidebar": {
       "closeOnLeftClickOutOfArea": true,
       "directconnectIP": "127.0.0.1",
