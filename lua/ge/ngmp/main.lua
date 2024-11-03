@@ -44,6 +44,9 @@ M.serverExtensionList = {
   -- the managers...
   "ngmp_levelMgr",
   "ngmp_vehicleMgr",
+
+  -- ui stuff like chat, names
+  "ngmp_ui_nameRender"
 }
 
 local function setLogin(data)

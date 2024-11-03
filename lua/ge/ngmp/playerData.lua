@@ -13,10 +13,7 @@ local convertQueue = {}
 local texObjs = {}
 local placeHolderTexObj = {}
 local downloadedAvatarThisFrame = false
-
-local mouseFocusedPlayerPopupName = "Vehicle Owner Detail View##NGMPUI"
-local mouseFocusedPlayerData
-local mouseFocusedPlayerWindowPos
+local settingAlwaysSteamIDonHover = false
 
 -- suffix is either nothing or "", "medium", or "full"
 local function getAvatar(avatarHash, suffix)
@@ -44,9 +41,11 @@ local function getAvatar(avatarHash, suffix)
     elseif not downloadedAvatarThisFrame then
       local convertTargetFilePath = M.convertCacheDir..tblIndex..".jpg"
       local rawData = ngmp_network.httpGet(string.format("https://avatars.steamstatic.com/%s%s.jpg", avatarHash, suffix))
-      writeFile(convertTargetFilePath, rawData)
-      convertQueue[#convertQueue+1] = {convertTargetFilePath, targetFilePath}
-      downloadedAvatarThisFrame = true
+      if rawData then
+        writeFile(convertTargetFilePath, rawData)
+        convertQueue[#convertQueue+1] = {convertTargetFilePath, targetFilePath}
+        downloadedAvatarThisFrame = true
+      end
     end
   end
 
@@ -79,7 +78,7 @@ end
 
 local function renderData(playerData)
   local style = im.GetStyle()
-  local avatar = ngmp_playerData.getAvatar(playerData.avatarHash, "full")
+  local avatar = ngmp_playerData.getAvatar(playerData.avatarHash, "medium")
   local sizeFac = ngmp_ui.getPercentVecX(1.25, false, true)/avatar.size.x
   local size = ngmp_ui.mulVec2Num(avatar.size, sizeFac)
 
@@ -92,7 +91,7 @@ local function renderData(playerData)
   im.PopFont()
   im.EndGroup()
 
-  if ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"}) then
+  if settingAlwaysSteamIDonHover then
     im.PushFont3("cairo_regular")
     im.SetWindowFontScale(0.8)
     im.Text(playerData.steamId)
@@ -122,43 +121,29 @@ local function onUpdate(dt)
     convertQueue = {}
     downloadedAvatarThisFrame = false
   end
-
-  if ngmp_vehicleMgr and ngmp_settings.get("vehicleTooltips", {"ui", "generic"}) == 1 then
-    -- right mouse
-    if im.IsMouseClicked(1) then
-      mouseFocusedPlayerWindowPos = im.GetMousePos()
-      local vehData = ngmp_vehicleMgr.getVehicleByRay(getCameraMouseRay())
-      if vehData and vehData[2] then
-        mouseFocusedPlayerData = M.playerDataById[vehData[2].steamId]
-      else
-        mouseFocusedPlayerData = nil
-      end
-    elseif im.IsMouseClicked(0) then
-      mouseFocusedPlayerData = nil
-    end
-
-    if mouseFocusedPlayerData then
-      im.BeginPopup(mouseFocusedPlayerPopupName)
-      renderData(mouseFocusedPlayerData)
-      im.EndPopup()
-
-      if not im.IsPopupOpen(mouseFocusedPlayerPopupName) then
-        im.OpenPopup1(mouseFocusedPlayerPopupName)
-      end
-    end
-  end
 end
 
 local function set(rawData)
+  rawData = rawData or {}
   local newData = {}
   M.playerData = newData
   M.playerDataById = {}
 
-  for _,v in ipairs(rawData) do
+  local textColor = ColorF(1,1,1,1)
+  local bgColor = ColorI(0,0,0,255)
+  for _,v in ipairs(rawData.players) do
     newData[#newData+1] = {
       name = v.name,
       steamId = v.steam_id,
-      avatarHash = v.avatar_hash
+      avatarHash = v.avatar_hash,
+
+      -- these two are for debugDrawer::drawTextAdvanced(), in which:
+      -- - Foreground is ColorF
+      -- - Background is ColorI
+      -- what the fuck? ...oh well, its beam
+      -- defaults are defined above
+      nameColor = v.textColor and ColorF(v.textColor[1]/255, v.textColor[2]/255, v.textColor[3]/255) or textColor,
+      backgroundColor = v.bgColor and ColorI(v.bgColor[1], v.bgColor[2], v.bgColor[3]) or bgColor
     }
     M.playerDataById[v.steam_id] = newData[#newData]
   end
@@ -170,6 +155,21 @@ local function set(rawData)
       return a.name < b.name
     end
   end)
+end
+
+local function onNGMPLogin(isLoggedIn, playerName, steamId, avatarHash)
+  ownData = {
+    name = playerName,
+    steamId = steamId,
+    avatarHash = avatarHash
+  }
+  M.steamId = steamId
+
+  ngmp_network.registerPacketDecodeFunc("PD", set)
+end
+
+local function onNGMPSettingsChanged()
+  settingAlwaysSteamIDonHover = ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"})
 end
 
 local function onExtensionLoaded()
@@ -189,25 +189,19 @@ local function onExtensionLoaded()
     end
   end
 
+  onNGMPSettingsChanged()
   setExtensionUnloadMode(M, "manual")
-end
-
-local function onNGMPLogin(isLoggedIn, playerName, steamId, avatarHash)
-  ownData = {
-    name = playerName,
-    steamId = steamId,
-    avatarHash = avatarHash
-  }
-  M.steamId = steamId
-
-  ngmp_network.registerPacketDecodeFunc("PD", set)
 end
 
 M.onNGMPLogin = onNGMPLogin
 
 M.onUpdate = onUpdate
+M.onNGMPUI = onNGMPUI
+M.onNGMPSettingsChanged = onNGMPSettingsChanged
 M.onExtensionLoaded = onExtensionLoaded
+
 M.renderTooltip = renderTooltip
+M.renderData = renderData
 
 M.set = set
 M.getAvatar = getAvatar

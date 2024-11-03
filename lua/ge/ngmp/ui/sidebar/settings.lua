@@ -22,8 +22,10 @@ local tabs = {
           ngmp_settings.set("closeOnLeftClickOutOfArea", boolPtr[0], {"ui", "sidebar"})
         end
       end
+
+      local vehTooltip = ngmp_settings.get("vehicleTooltips", {"ui", "generic"})
       do
-        if im.BeginCombo("Level", vehicleTooltipsLookup[ngmp_settings.get("vehicleTooltips", {"ui", "generic"})]) then
+        if im.BeginCombo("Name Tooltips", vehicleTooltipsLookup[vehTooltip]) then
           im.SetWindowFontScale(0.7)
           for i=0, 2 do
             if im.Selectable1(vehicleTooltipsLookup[i]) then
@@ -32,6 +34,20 @@ local tabs = {
           end
           im.SetWindowFontScale(1)
           im.EndCombo()
+        end
+      end
+      if vehTooltip == 0 then
+        do
+          local boolPtr = im.BoolPtr(ngmp_settings.get("fade", {"ui", "vehicleTooltip", "1"}))
+          if im.Checkbox("Fade Names by Distance", boolPtr) then
+            ngmp_settings.set("fade", boolPtr[0], {"ui", "vehicleTooltip", "1"})
+          end
+        end
+        do
+          local boolPtr = im.BoolPtr(ngmp_settings.get("hideBehind", {"ui", "vehicleTooltip", "1"}))
+          if im.Checkbox("Hide Names Behind Objects", boolPtr) then
+            ngmp_settings.set("hideBehind", boolPtr[0], {"ui", "vehicleTooltip", "1"})
+          end
         end
       end
       im.Dummy(im.ImVec2(0,0))
