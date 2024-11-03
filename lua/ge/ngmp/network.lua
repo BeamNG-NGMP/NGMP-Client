@@ -118,6 +118,13 @@ local function sendPacket(packetType, context)
   if err then
     log("D", "ngmp.network.sendPacket", string.format("Packet of type %s failed to send!", packetType))
     log("D", "ngmp.network.sendPacket", string.format("Error: %s", err))
+
+    -- looks like the connection has been terminated
+    if err == "closed" then
+      socket.disconnect(M.connection)
+      log("W", "ngmp.network.sendPacket", "Packet failed to send for \"closed\", indicating that the launcher has disconnected.")
+      log("W", "ngmp.network.sendPacket", "Closing socket connection.")
+    end
   end
 
   return confirmId
@@ -125,6 +132,7 @@ end
 
 local function startConnection()
   if socket.connect(M.connection) then
+    log("D", "ngmp.network.startConnection", "Connection successful!")
     sendPacket("CI")
   else
     log("W", "ngmp.network.startConnection", "Connection failed! See above for error.")
@@ -150,8 +158,17 @@ local function onUpdate(dt)
 end
 
 local function httpGet(url)
+  if not M.connection.connected then return end
+
   log("D", "ngmp.network.httpGet", string.format("Sending HTTP GET request to %s", url))
-  return http.request("http://127.0.0.1:4434/external/"..url)
+  local requestRes, err = http.request("http://127.0.0.1:4434/external/"..url)
+  if not requestRes and err then
+    log("E", "ngmp.network.httpGet", string.format("HTTP GET request failed!", url))
+    log("E", "ngmp.network.httpGet", string.format("Error: %s", err))
+    return nil
+  else
+    return requestRes
+  end
 end
 
 local function registerPacketDecodeFunc(packetType, func)
