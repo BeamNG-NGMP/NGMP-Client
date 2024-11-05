@@ -1,19 +1,22 @@
 {
   "ui": {
+    "chat":{
+      "chatSize":[495, 240]
+    },
     "generic": {
       "alwaysSteamIDonHover": false,
       "vehicleTooltips": 1
+    },
+    "sidebar": {
+      "closeOnLeftClickOutOfArea": true,
+      "directconnectIP": "127.0.0.1",
+      "directconnectPort": "42630"
     },
     "vehicleTooltip": {
       "1": {
         "fade": true,
         "hideBehind": false
       }
-    },
-    "sidebar": {
-      "closeOnLeftClickOutOfArea": true,
-      "directconnectIP": "127.0.0.1",
-      "directconnectPort": "42630"
     }
   }
 }
