@@ -1,31 +1,34 @@
 
 
 local M = {
-  name = "Settings",
-  author = "DaddelZeit (NGMP Official)"
+  name = ngmp_ui_translate("ui.sidebar.tabs.settings.name"),
+  author = ngmp_ui_translate("ui.sidebar.tabs.settings.author")
 }
 
 local im = ui_imgui
 
 local vehicleTooltipsLookup = {
-  [0] = "Always Show Text",
-  [1] = "Show on Right Click",
-  [2] = "Never Show"
+  [0] = ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip.0"),
+  [1] = ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip.1"),
+  [2] = ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip.2")
 }
+
+local function renderCheckbox(id, cats, translateCat)
+  local boolPtr = im.BoolPtr(ngmp_settings.get(id, cats))
+  if ngmp_ui.checkbox(ngmp_ui_translate("ui.sidebar.tabs.settings."..translateCat..id), boolPtr) then
+    ngmp_settings.set(id, boolPtr[0], cats)
+  end
+end
+
 local tabs = {
   {
-    name = "User Interface",
+    name = ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.header"),
     render = function()
-      do
-        local boolPtr = im.BoolPtr(ngmp_settings.get("closeOnLeftClickOutOfArea", {"ui", "sidebar"}))
-        if ngmp_ui.checkbox("Close sidebar on click beside", boolPtr) then
-          ngmp_settings.set("closeOnLeftClickOutOfArea", boolPtr[0], {"ui", "sidebar"})
-        end
-      end
+      renderCheckbox("closeOnLeftClickOutOfArea", {"ui", "sidebar"}, "userInterface.")
 
       local vehTooltip = ngmp_settings.get("vehicleTooltips", {"ui", "generic"})
       do
-        if im.BeginCombo("Name Tooltips", vehicleTooltipsLookup[vehTooltip]) then
+        if im.BeginCombo(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip"), vehicleTooltipsLookup[vehTooltip]) then
           im.SetWindowFontScale(0.7)
           for i=0, 2 do
             if ngmp_ui.Selectable1(vehicleTooltipsLookup[i]) then
@@ -37,39 +40,24 @@ local tabs = {
         end
       end
       if vehTooltip == 0 then
-        do
-          local boolPtr = im.BoolPtr(ngmp_settings.get("fade", {"ui", "vehicleTooltip", "1"}))
-          if ngmp_ui.checkbox("Fade Names by Distance", boolPtr) then
-            ngmp_settings.set("fade", boolPtr[0], {"ui", "vehicleTooltip", "1"})
-          end
-        end
-        do
-          local boolPtr = im.BoolPtr(ngmp_settings.get("hideBehind", {"ui", "vehicleTooltip", "1"}))
-          if ngmp_ui.checkbox("Hide Names Behind Objects", boolPtr) then
-            ngmp_settings.set("hideBehind", boolPtr[0], {"ui", "vehicleTooltip", "1"})
-          end
-        end
+        renderCheckbox("fade", {"ui", "vehicleTooltip", "1"}, "userInterface.vehicleTooltip.")
+        renderCheckbox("hideBehind", {"ui", "vehicleTooltip", "1"}, "userInterface.vehicleTooltip.")
       end
       im.Dummy(im.ImVec2(0,0))
-      im.Text("Chat")
+      im.Text(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.chat"))
       im.Separator()
-      do
-        local boolPtr = im.BoolPtr(ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"}))
-        if ngmp_ui.checkbox("Always show SteamID in user popup", boolPtr) then
-          ngmp_settings.set("alwaysSteamIDonHover", boolPtr[0], {"ui", "generic"})
-        end
-      end
+      renderCheckbox("alwaysSteamIDonHover", {"ui", "generic"}, "userInterface.")
     end,
     lastCursorPosY = 0,
     targetSize = 1,
     extensionSmoother = newTemporalSigmoidSmoothing(950, 750)
   },
   {
-    name = "Mod Cache",
+    name = ngmp_ui_translate("ui.sidebar.tabs.settings.mod.header"),
     render = function()
-      im.Text(("%.1fGB used"):format(ngmp_modMgr.totalSizeGB))
+      im.Text(ngmp_ui_translate("ui.sidebar.tabs.settings.mod.totalsize", {totalGB = ngmp_modMgr.totalSizeGB}))
       im.PushFont3("cairo_bold")
-      ngmp_ui.primaryButton("Clear Cache", im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeightWithSpacing()*math.max(ngmp_modMgr.totalSizeGB or 1, 1)))
+      ngmp_ui.primaryButton(ngmp_ui_translate("ui.sidebar.tabs.settings.mod.clear"), im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeightWithSpacing()*math.max(ngmp_modMgr.totalSizeGB or 1, 1)))
       im.PopFont()
     end,
     lastCursorPosY = 0,

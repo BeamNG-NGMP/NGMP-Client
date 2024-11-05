@@ -6,6 +6,8 @@ M.toml = require("ngmp/tomlFile")
 M.savePath = "/"
 M.clientVersion = 0
 
+local ngmpUtils = rerequire("ngmp/utils")
+
 -- TODO: actually implement a check for this
 M.protocolVersion = 0
 
@@ -35,6 +37,7 @@ M.extensionLoadList = {
 
   -- ui goes last
   "ngmp_ui",
+  "ngmp_ui_translate",
   "ngmp_ui_sidebar",
 }
 
@@ -65,23 +68,24 @@ local function setBridgeConnected(data)
   extensions.hook("onNGMPLauncherConnect", M.isBridgeConnected)
 end
 
-local function disconnect(err)
+-- connection ended
+local function disconnect(data)
   for i=1, #M.serverExtensionList do
     extensions.unload(M.serverExtensionList[i])
   end
 
-  if err then
-    -- connection fail!
-  else
-    -- connection ended
-  end
+  -- connection ended
+  ngmp_network.serverConnection.connected = false
+
+  -- connection fail!
+  ngmp_network.serverConnection.err = data and data.error or ""
 end
 
 local function connect(data)
   for i=1, #M.serverExtensionList do
     extensions.load(M.serverExtensionList[i])
   end
-
+  ngmp_network.serverConnection.connected = true
   ngmp_levelMgr.loadLevel(data.confirm_id, data.map_string)
 end
 
@@ -113,13 +117,19 @@ local function onUpdate()
       client_version = ngmp_main.clientVersion,
     }
   end)
+
+  ngmp_network.registerPacketEncodeFunc("HX", nop)
   ngmp_network.registerPacketEncodeFunc("HJ", function(ip_address, port) -- JoinServer packet
-    local finalIp = ip_address
-    if finalIp and port and port ~= "" then
-      finalIp = finalIp..":"..port
+    local finalIp = ngmpUtils.buildIP(ip_address, port)
+
+    if ngmp_network.serverConnection.connected then
+      ngmp_network.sendPacket("HX")
     end
+
+    ngmp_network.serverConnection.err = ""
+    ngmp_network.serverConnection.ip = finalIp
     return {
-      ip_address = finalIp or M.connection.ip..":"..M.connection.serverPort
+      ip_address = finalIp
     }
   end)
 

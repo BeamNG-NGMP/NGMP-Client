@@ -1,9 +1,10 @@
 
 local M = {}
 
+local im = ui_imgui
+
 -- Thanks to Paul Kulchenko on Stack Overflow
 -- https://stackoverflow.com/a/16643628
-
 local function splitIP(ipStr)
   if type(ipStr) ~= "string" then return false end
 
@@ -61,6 +62,14 @@ local function splitIP(ipStr)
   return ipStr
 end
 
+local function buildIP(ip_address, port)
+  local finalIp = ip_address
+  if finalIp and port and port ~= "" then
+    finalIp = finalIp..":"..port
+  end
+  return finalIp
+end
+
 local function ffiConvertNumber(str, bytes)
   local _res = ffi.new(string.format("uint%d_t[1]", bytes*8))
   ffi.copy(_res, str, bytes)
@@ -68,6 +77,7 @@ local function ffiConvertNumber(str, bytes)
 end
 
 M.splitIP = splitIP
+M.buildIP = buildIP
 M.ffiConvertNumber = ffiConvertNumber
 
 return M

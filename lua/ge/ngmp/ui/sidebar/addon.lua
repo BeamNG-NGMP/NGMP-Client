@@ -1,8 +1,8 @@
 
 
 local M = {
-  name = "Add-Ons",
-  author = "DaddelZeit (NGMP Official)"
+  name = ngmp_ui_translate("ui.sidebar.tabs.addon.name"),
+  author = ngmp_ui_translate("ui.sidebar.tabs.addon.author")
 }
 
 local im = ui_imgui

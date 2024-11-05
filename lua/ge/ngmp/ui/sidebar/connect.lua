@@ -14,6 +14,9 @@ local star
 local unstar
 local no_server
 
+local sync
+local err
+
 local directConnectTargetSize = 1
 local directConnectExtensionSmoother = newTemporalSigmoidSmoothing(950, 750)
 local directConnectIp = im.ArrayChar(128)
@@ -32,6 +35,7 @@ local filters = {
   favorite = false,
 }
 local servers, serverKeys = ngmp_serverList.filter({})
+local connectButtonTimer = 0
 
 local function search()
 end
@@ -41,13 +45,48 @@ local function filterCheckbox(name, val)
   return im.Checkbox(name, temp)
 end
 
+local function connectButton(dt, ip, execFunc)
+  local buttonHeight = im.GetTextLineHeight()*2
+  local imgSize = im.ImVec2(buttonHeight*0.75, buttonHeight*0.75)
+
+  local text = ngmp_network.serverConnection.ip == ip and ngmp_ui_translate("ui.sidebar.tabs.connect.reconnect") or ngmp_ui_translate("ui.sidebar.tabs.connect.connect")
+  local disableButton = false
+  if not ngmp_network.serverConnection.connected and ngmp_network.serverConnection.ip == ip then
+    local prevCursorPosY = im.GetCursorPosY()
+    if ngmp_network.serverConnection.err ~= "" then
+      im.SetCursorPosY(prevCursorPosY+(buttonHeight-imgSize.y)/2)
+      im.Image(err.texId, imgSize)
+      if im.IsItemHovered() then
+        im.SetTooltip(ngmp_network.serverConnection.err)
+      end
+      im.SameLine()
+      text = ngmp_ui_translate("ui.sidebar.generic.input.retry")
+    else
+      connectButtonTimer = (connectButtonTimer+dt*10)%(math.pi*4)
+      im.SetCursorPosY(prevCursorPosY+(buttonHeight-imgSize.y)/2)
+      ngmp_ui.ImageRotated(im.GetWindowDrawList(), sync.texId, imgSize, connectButtonTimer, ngmp_ui.uv2D, ngmp_ui.uv1D, ngmp_ui.uv4D, ngmp_ui.uv3D)
+      im.SameLine()
+      text = ngmp_ui_translate("ui.sidebar.tabs.connect.connecting")
+      disableButton = true
+    end
+    im.SetCursorPosY(prevCursorPosY)
+  end
+  im.PushFont3("cairo_bold")
+  if disableButton then im.BeginDisabled() end
+  if ngmp_ui.primaryButton(text, im.ImVec2(im.GetContentRegionAvailWidth(), buttonHeight)) then
+    execFunc()
+  end
+  if disableButton then im.EndDisabled() end
+  im.PopFont("cairo_bold")
+end
+
 local function renderDirectConnect(dt)
   local style = im.GetStyle()
   if directConnectExtensionSmoother:get(directConnectTargetSize, dt) >= 0.5 then
     im.BeginChild1("ServerListFilters##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(directConnectExtensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
     im.SetWindowFontScale(1)
 
-    im.Text("IP Address: ")
+    im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.direct.ipaddress"))
     im.SameLine()
     im.SetNextItemWidth(im.GetContentRegionAvailWidth())
     local cursorPos = im.GetCursorPos()
@@ -62,7 +101,7 @@ local function renderDirectConnect(dt)
       im.SetCursorPos(postCursorPos)
     end
 
-    im.Text("Port: ")
+    im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.direct.port"))
     im.SameLine()
     im.SetNextItemWidth(im.GetContentRegionAvailWidth())
     cursorPos = im.GetCursorPos()
@@ -77,17 +116,18 @@ local function renderDirectConnect(dt)
       im.SetCursorPos(postCursorPos)
     end
 
-    if ngmp_ui.button("Set from Clipboard", im.ImVec2(im.GetContentRegionAvailWidth(), 0)) then
+    if ngmp_ui.button(ngmp_ui_translate("ui.sidebar.tabs.connect.direct.clipboard"), im.ImVec2(im.GetContentRegionAvailWidth(), 0)) then
       local ip, port = ngmpUtils.splitIP(getClipboard())
       ffi.copy(directConnectIp, ip or "")
       ffi.copy(directConnectPort, port or "")
     end
     im.Dummy(im.ImVec2(0,style.ItemSpacing.y))
-    if ngmp_ui.primaryButton("Connect", im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeight()*2)) then
+    local finalIp = ngmpUtils.buildIP(ffi.string(directConnectIp), ffi.string(directConnectPort))
+    connectButton(dt, finalIp, function()
       ngmp_network.sendPacket("HJ", {data = {ffi.string(directConnectIp), ffi.string(directConnectPort)}})
       ngmp_settings.set("directconnectIP", ffi.string(directConnectIp), {"ui", "sidebar"})
       ngmp_settings.set("directconnectPort", ffi.string(directConnectPort), {"ui", "sidebar"})
-    end
+    end)
 
     im.Dummy(im.ImVec2(0,style.ItemSpacing.y))
     if directConnectTargetSize ~= 0 then
@@ -112,7 +152,7 @@ local function renderServerlist(dt)
     im.SetCursorPosX(cursorPos.x+5)
     im.SetCursorPosY(cursorPos.y)
     im.BeginDisabled()
-    im.Text("Search...")
+    im.Text(ngmp_ui_translate("ui.sidebar.generic.input.search"))
     im.EndDisabled()
     im.SetCursorPos(postCursorPos)
   end
@@ -121,28 +161,28 @@ local function renderServerlist(dt)
     im.SetWindowFontScale(0.8)
 
     im.BeginChild1("ServerListFilters##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(filtersExtensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
-    im.Text("Filters")
+    im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.filter"))
     im.Separator()
     if im.BeginTable("ServerListFiltersOptions##NGMPUI", 2) then
       im.TableNextColumn()
-      if filterCheckbox("Empty", filters.empty) then
+      if filterCheckbox(ngmp_ui_translate("ui.sidebar.tabs.connect.filter.empty"), filters.empty) then
         filters.empty = not filters.empty
         filtersChanged = true
       end
       im.TableNextColumn()
-      if filterCheckbox("Not Empty", filters.notEmpty) then
+      if filterCheckbox(ngmp_ui_translate("ui.sidebar.tabs.connect.filter.notempty"), filters.notEmpty) then
         filters.notEmpty = not filters.notEmpty
         filtersChanged = true
       end
       im.TableNextColumn()
-      if filterCheckbox("Not Full", filters.notFull) then
+      if filterCheckbox(ngmp_ui_translate("ui.sidebar.tabs.connect.filter.notfull"), filters.notFull) then
         filters.notFull = not filters.notFull
         filtersChanged = true
       end
       im.TableNextColumn()
-      if im.BeginCombo("Level", filters.level or "All") then
+      if im.BeginCombo(ngmp_ui_translate("ui.sidebar.tabs.connect.filter.level"), filters.level or ngmp_ui_translate("ui.sidebar.tabs.connect.filter.levelall")) then
         im.SetWindowFontScale(0.7)
-        if ngmp_ui.Selectable1("All") then
+        if ngmp_ui.Selectable1(ngmp_ui_translate("ui.sidebar.tabs.connect.filter.levelall")) then
           filters.level = false
           filtersChanged = true
         end
@@ -180,9 +220,9 @@ local function renderServerlist(dt)
 
     im.PushFont3("cairo_regular_medium")
     im.SetWindowFontScale(1.75)
-    im.SetCursorPosX(center.x-im.CalcTextSize("Uh-Oh!").x/2)
+    im.SetCursorPosX(center.x-im.CalcTextSize(ngmp_ui_translate("ui.sidebar.generic.fuckup")).x/2)
     im.SetCursorPosY(im.GetCursorPosY()-im.GetTextLineHeightWithSpacing()*1.8)
-    im.Text("Uh-Oh!")
+    im.Text(ngmp_ui_translate("ui.sidebar.generic.fuckup"))
     im.SetWindowFontScale(1)
     im.PopFont()
 
@@ -195,10 +235,10 @@ local function renderServerlist(dt)
       im.Image(no_server.texId, size)
     end
 
-    im.SetCursorPosX(center.x-im.CalcTextSize("There aren't any servers here!").x/2)
-    im.Text("There aren't any servers here!")
-    im.SetCursorPosX(center.x-im.CalcTextSize("Try different filters.").x/2)
-    im.Text("Try different filters.")
+    im.SetCursorPosX(center.x-im.CalcTextSize(ngmp_ui_translate("ui.sidebar.tabs.connect.serverlist.empty")).x/2)
+    im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.serverlist.empty"))
+    im.SetCursorPosX(center.x-im.CalcTextSize(ngmp_ui_translate("ui.sidebar.tabs.connect.serverlist.empty1")).x/2)
+    im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.serverlist.empty1"))
   end
   for i = 1, #serverKeys do
     local key = serverKeys[i]
@@ -208,7 +248,7 @@ local function renderServerlist(dt)
     im.SetWindowFontScale(1.3)
     im.PushFont3("cairo_bold")
     local extended
-    local playerCountStr = (#server.players).."/"..server.max_players
+    local playerCountStr = ngmp_ui_translate("ui.sidebar.tabs.connect.serverInfo.playerCount", {players = #server.players, maxplayers = server.max_players})
     do
       extended = im.TreeNodeEx1(server.name.."##NGMPUI"..i, im.ImGuiTreeNodeFlags_SpanAvailWidth)
       if im.IsItemHovered() then
@@ -241,29 +281,28 @@ local function renderServerlist(dt)
     if extended then
       im.Unindent()
       im.PushFont3("notosans_sc_regular")
-      if im.BeginTable("ServerView##NGMPUI"..key, 1, im.TableFlags_RowBg+im.TableFlags_BordersOuter, im.ImVec2(im.GetContentRegionAvailWidth(), 0)) then
+      if im.BeginTable("ServerView##NGMPUI"..key, 1, im.TableFlags_RowBg+im.TableFlags_BordersOuter+im.TableFlags_SizingFixedSame, im.ImVec2(im.GetContentRegionAvailWidth(), 0)) then
         im.TableNextColumn()
         im.SetWindowFontScale(1.1)
         im.Text(server.description)
         im.SetWindowFontScale(1)
         im.Dummy(im.ImVec2(0,0))
         im.TableNextColumn()
-        im.Text("Categories: "..table.concat(server.categories, ", "))
+        im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.serverInfo.categories", {categories = table.concat(server.categories, ", ")}))
         im.TableNextColumn()
-        im.Text("Connected Players ("..playerCountStr.."): "..table.concat(server.players, ", "))
+        im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.serverInfo.players", {playercount = playerCountStr, playerslist = table.concat(server.players, ", ")}))
         im.TableNextColumn()
-        im.Text("Level: "..server.level:match("/levels/(.*)/"))
+        im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.serverInfo.level", {level = server.level:match("/levels/(.*)/")}))
         im.TableNextColumn()
-        im.Text("Host: "..server.author)
+        im.Text(ngmp_ui_translate("ui.sidebar.tabs.connect.serverInfo.host", {author = server.author}))
         im.EndTable()
       end
       im.PopFont()
 
-      im.PushFont3("cairo_bold")
-      if ngmp_ui.primaryButton("Connect", im.ImVec2(xWidth,0)) then
+      local finalIp = ngmpUtils.buildIP(key:match("^(.+):(%d+)$"))
+      connectButton(dt, finalIp, function()
         ngmp_network.sendPacket("HJ", {data = {key:match("^(.+):(%d+)$")}})
-      end
-      im.PopFont()
+      end)
 
       im.Indent()
       im.TreePop()
@@ -274,7 +313,7 @@ local function renderServerlist(dt)
   im.EndChild()
 
   im.PushFont3("cairo_bold")
-  ngmp_ui.button("REFRESH", im.ImVec2(im.GetContentRegionAvailWidth(), 0))
+  ngmp_ui.button(ngmp_ui_translate("ui.sidebar.tabs.connect.serverlist.reload"), im.ImVec2(im.GetContentRegionAvailWidth(), 0))
   im.PopFont()
 end
 
@@ -365,10 +404,10 @@ local function render(dt)
 
   im.PushFont3("cairo_bold")
   if im.BeginTabBar("Connect Tabs") then
-    renderTabItem(dt, "Public", renderPublic)
-    renderTabItem(dt, "Recent", renderRecent)
-    renderTabItem(dt, "Favorites", renderFavorites)
-    renderTabItem(dt, "Direct Connect", renderDirectConnect)
+    renderTabItem(dt, ngmp_ui_translate("ui.sidebar.tabs.connect.tab.public"), renderPublic)
+    renderTabItem(dt, ngmp_ui_translate("ui.sidebar.tabs.connect.tab.recent"), renderRecent)
+    renderTabItem(dt, ngmp_ui_translate("ui.sidebar.tabs.connect.tab.favorites"), renderFavorites)
+    renderTabItem(dt, ngmp_ui_translate("ui.sidebar.tabs.connect.tab.direct"), renderDirectConnect)
     im.EndTabBar()
   end
   im.PopFont()
@@ -381,6 +420,9 @@ local function init()
   star = FS:fileExists("/art/ngmpui/star_fill.png") and imguiUtils.texObj("/art/ngmpui/star_fill.png")
   unstar = FS:fileExists("/art/ngmpui/star.png") and imguiUtils.texObj("/art/ngmpui/star.png")
   no_server = FS:fileExists("/art/ngmpui/tune.png") and imguiUtils.texObj("/art/ngmpui/tune.png")
+
+  sync = FS:fileExists("/art/ngmpui/sync.png") and imguiUtils.texObj("/art/ngmpui/sync.png")
+  err = FS:fileExists("/art/ngmpui/error.png") and imguiUtils.texObj("/art/ngmpui/error.png")
 
   ffi.copy(directConnectIp, ngmp_settings.get("directconnectIP", {"ui", "sidebar"}))
   ffi.copy(directConnectPort, ngmp_settings.get("directconnectPort", {"ui", "sidebar"}))

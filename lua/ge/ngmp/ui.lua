@@ -2,7 +2,7 @@
 -- extension that dispatches ui calls and includes helper funcs
 local M = {}
 
-M.dependencies = {"ngmp_main", "ui_imgui"}
+M.dependencies = {"ngmp_main", "ngmp_ui_translate", "ui_imgui"}
 local C = ffi.C
 
 local style = rerequire("ngmp/ui/style")
@@ -39,6 +39,8 @@ end
 -- SHORTCUTS
 M.bngCol = im.ImVec4(1,0.4,0,1)
 M.bngCol32 = im.GetColorU322(M.bngCol)
+M.whiteCol = im.ImVec4(1,1,1,1)
+M.whiteCol32 = im.GetColorU322(M.whiteCol)
 local mainSizePos = {}
 
 local function getMainSizePos()
@@ -161,23 +163,31 @@ function M.Selectable1(string_label, bool_selected, ImGuiSelectableFlags_flags, 
   return retVal
 end
 
-function M.button(string_label, ImVec2_size)
-  if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
-  if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
-  C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
-  local retVal = C.imgui_Button(string_label, ImVec2_size)
-  C.imgui_PopStyleVar(1)
+local function ImRotate(v, cosA, sinA)
+  v:set(v.x * cosA - v.y * sinA, v.x * sinA + v.y * cosA, 0)
+  return v
+end
+M.ImRotate = ImRotate
 
-  local buttonState = 0
-  if C.imgui_IsItemHovered(0) then
-    C.imgui_SetMouseCursor(im.MouseCursor_Hand)
-    buttonState = 1
-  end
-  if retVal then buttonState = 2 end
+local uv1D, uv2D, uv3D, uv4D = im.ImVec2(0, 0), im.ImVec2(1, 0), im.ImVec2(1, 1), im.ImVec2(0, 1)
+M.uv1D, M.uv2D, M.uv3D, M.uv4D = uv1D, uv2D, uv3D, uv4D
+function M.ImageRotated(drawlist, texId, size, angle, uv1, uv2, uv3, uv4, color)
+  local center = vec3(im.GetCursorScreenPos().x+size.x/2, im.GetCursorScreenPos().y+size.y/2)
+  im.Dummy(im.ImVec2(size.x, size.y))
 
-  playbuttonSound(buttonStates[string_label], buttonState)
-  buttonStates[string_label] = buttonState
-  return retVal
+  local cosA = math.cos(angle)
+  local sinA = math.sin(angle)
+
+  local pos = {
+    center + ImRotate(vec3(-size.x * 0.5, -size.y * 0.5, 0), cosA, sinA),
+    center + ImRotate(vec3( size.x * 0.5, -size.y * 0.5, 0), cosA, sinA),
+    center + ImRotate(vec3( size.x * 0.5,  size.y * 0.5, 0), cosA, sinA),
+    center + ImRotate(vec3(-size.x * 0.5,  size.y * 0.5, 0), cosA, sinA)
+  }
+
+  im.ImDrawList_AddImageQuad(drawlist, texId,
+    im.ImVec2(pos[1].x, pos[1].y), im.ImVec2(pos[2].x, pos[2].y), im.ImVec2(pos[3].x, pos[3].y), im.ImVec2(pos[4].x, pos[4].y),
+    uv1 or uv1D, uv2 or uv2D, uv3 or uv3D, uv4 or uv4D, color or M.whiteCol32)
 end
 
 local function calculateButtonSize(text)

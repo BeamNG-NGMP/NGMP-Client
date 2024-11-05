@@ -1,8 +1,8 @@
 
 
 local M = {
-  name = "Login",
-  author = "DaddelZeit (NGMP Official)"
+  name = ngmp_ui_translate("ui.sidebar.tabs.login.name"),
+  author = ngmp_ui_translate("ui.sidebar.tabs.login.author")
 }
 
 local im = ui_imgui
@@ -19,7 +19,7 @@ local function render(dt)
   im.SetCursorPosY(center.y)
 
   im.PushFont3("cairo_bold")
-  local buttonSize = ngmp_ui.calculateButtonSize("Log in with Steam")
+  local buttonSize = ngmp_ui.calculateButtonSize(ngmp_ui_translate("ui.sidebar.tabs.login.request"))
   buttonSize.x = center.x
   im.PopFont()
 
@@ -38,7 +38,7 @@ local function render(dt)
 
   im.PushFont3("cairo_bold")
   im.SetCursorPosX(center.x-buttonSize.x/2)
-  if ngmp_ui.primaryButton("Log in with Steam", buttonSize) then
+  if ngmp_ui.primaryButton(ngmp_ui_translate("ui.sidebar.tabs.login.request"), buttonSize) then
     ngmp_network.sendPacket("LR")
     showLocked = not showLocked
   end

@@ -24,6 +24,13 @@ M.connection = {
 }
 socket.init(M.connection)
 
+-- for other modules: set in main
+M.serverConnection = {
+  connected = false,
+  ip = "",
+  err = "",
+}
+
 local confirmIdCache = {}
 local function generateConfirmID()
   local confirm_id
