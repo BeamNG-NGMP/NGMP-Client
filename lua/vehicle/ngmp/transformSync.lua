@@ -88,7 +88,7 @@ local function drawDebug()
 end
 
 local function updateGFX(dt)
-  if not received then return end
+  if not received or not current then return end
   if M.debugDraw then
     drawDebug()
   end
@@ -121,13 +121,13 @@ local function onPhysicsStep(dtPhys)
     step = 0
 
     obj:queueGameEngineLua(
-        string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleTransformData(%q, %q) end",
-        ngmp_sync.vehFullId, jsonEncode({
-          pos = current.pos:toTable(),
-          rot = current.rot:toTable(),
-          vel = current.vel:toTable(),
-          rvel = current.rvel:toTable()
-        })))
+      string.format("if ngmp_vehicleMgr then ngmp_vehicleMgr.sendVehicleTransformData(%q, %q) end",
+      ngmp_sync.vehFullId, jsonEncode({
+        pos = current.pos:toTable(),
+        rot = current.rot:toTable(),
+        vel = current.vel:toTable(),
+        rvel = current.rvel:toTable()
+      })))
   end
 end
 

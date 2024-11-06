@@ -94,7 +94,6 @@ local nameRenderFuncs = {
 local function onNGMPUI(dt)
   if ui_visibility and ui_visibility.get() == false then return end
   if not ngmp_vehicleMgr or settingMode == 2 then return end
-  dump(settingMode)
   nameRenderFuncs[settingMode](dt)
 end
 
