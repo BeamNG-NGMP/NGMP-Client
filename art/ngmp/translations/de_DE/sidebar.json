@@ -1,0 +1,78 @@
+{
+  "ui.sidebar.tabs.addon.name": "Add-Ons",
+  "ui.sidebar.tabs.addon.author": "DaddelZeit (NGMP)",
+
+
+  "ui.sidebar.tabs.login.name": "Login",
+  "ui.sidebar.tabs.login.author": "DaddelZeit (NGMP)",
+
+  "ui.sidebar.tabs.login.request": "Mit Steam anmelden",
+
+
+  "ui.sidebar.tabs.connect.name": "Verbinden",
+  "ui.sidebar.tabs.connect.author": "DaddelZeit (NGMP)",
+
+  "ui.sidebar.tabs.connect.tab.public": "Öffentlich",
+  "ui.sidebar.tabs.connect.tab.recent": "Kürzlich",
+  "ui.sidebar.tabs.connect.tab.favorites": "Favoriten",
+  "ui.sidebar.tabs.connect.tab.direct": "Direkt-Verbindung",
+
+  "ui.sidebar.tabs.connect.connect": "Verbinden",
+  "ui.sidebar.tabs.connect.reconnect": "Erneut Verbinden",
+  "ui.sidebar.tabs.connect.connecting": "Verbinden...",
+
+  "ui.sidebar.tabs.connect.direct.ipaddress": "IP-Addresse: ",
+  "ui.sidebar.tabs.connect.direct.port": "Port: ",
+  "ui.sidebar.tabs.connect.direct.clipboard": "Aus Zwischenablage setzen",
+
+  "ui.sidebar.tabs.connect.filter": "Filter",
+  "ui.sidebar.tabs.connect.filter.empty": "Leer",
+  "ui.sidebar.tabs.connect.filter.notempty": "Nicht Leer",
+  "ui.sidebar.tabs.connect.filter.notfull": "Nicht Voll",
+  "ui.sidebar.tabs.connect.filter.level": "Karte",
+  "ui.sidebar.tabs.connect.filter.levelall": "Alle",
+
+  "ui.sidebar.tabs.connect.serverInfo.playerCount": "{players}/{maxplayers}",
+  "ui.sidebar.tabs.connect.serverInfo.categories": "Kategorien: {categories}",
+  "ui.sidebar.tabs.connect.serverInfo.players": "Verbundene Spieler: ({playercount}): {playerslist}",
+  "ui.sidebar.tabs.connect.serverInfo.level": "Karte: {level}",
+  "ui.sidebar.tabs.connect.serverInfo.host": "Host: {author}",
+
+  "ui.sidebar.tabs.connect.serverlist.reload": "Aktualisieren",
+  "ui.sidebar.tabs.connect.serverlist.empty": "Hier gibt es keine Server!",
+  "ui.sidebar.tabs.connect.serverlist.empty1": "Probiere andere Filter.",
+
+
+  "ui.sidebar.tabs.launcher.name": "Launcher-Verbindung",
+  "ui.sidebar.tabs.launcher.author": "DaddelZeit (NGMP)",
+  "ui.sidebar.tabs.launcher.info": "Es scheint, als ob wir keine Verbindung zum Launcher herstellen können!",
+  "ui.sidebar.tabs.launcher.report": "Fehlerbericht",
+  "ui.sidebar.tabs.launcher.error": "Grund: \"{err}\"",
+
+
+  "ui.sidebar.tabs.settings.name": "Einstellungen",
+  "ui.sidebar.tabs.settings.author": "DaddelZeit (NGMP)",
+
+  "ui.sidebar.tabs.settings.userInterface.header": "Benutzeroberfläche",
+
+  "ui.sidebar.tabs.settings.userInterface.closeOnLeftClickOutOfArea": "Seitenleiste durch Klicken daneben schließen",
+  "ui.sidebar.tabs.settings.userInterface.vehicleTooltip": "Namens- Anzeige",
+  "ui.sidebar.tabs.settings.userInterface.vehicleTooltip.0": "Immer anzeigen",
+  "ui.sidebar.tabs.settings.userInterface.vehicleTooltip.1": "Bei Rechtsklick anzeigen",
+  "ui.sidebar.tabs.settings.userInterface.vehicleTooltip.2": "Nie anzeigen",
+
+  "ui.sidebar.tabs.settings.userInterface.vehicleTooltip.fade": "Namen nach Entfernung ausblenden",
+  "ui.sidebar.tabs.settings.userInterface.vehicleTooltip.hideBehind": "Namen hinter Objekten verbergen",
+
+  "ui.sidebar.tabs.settings.userInterface.chat": "Chat",
+  "ui.sidebar.tabs.settings.userInterface.alwaysSteamIDonHover": "SteamID im Benutzer-Popup immer anzeigen",
+
+  "ui.sidebar.tabs.settings.mod.header": "Mod-Cache",
+  "ui.sidebar.tabs.settings.mod.totalsize": "{totalGB:%.1f}GB benutzt",
+  "ui.sidebar.tabs.settings.mod.clear": "Cache leeren",
+
+
+  "ui.sidebar.generic.fuckup": "Oh-oh!",
+  "ui.sidebar.generic.input.retry": "Erneut versuchen",
+  "ui.sidebar.generic.input.search": "Suchen..."
+}
