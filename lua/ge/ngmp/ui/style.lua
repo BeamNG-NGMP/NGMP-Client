@@ -18,6 +18,11 @@ style.AntiAliasedFill = true
 style.AntiAliasedLines = true
 style.AntiAliasedLinesUseTex = true
 style.Alpha = 1
+
+style.HoverStationaryDelay = 0.15
+style.HoverDelayShort = 0.15
+style.HoverDelayNormal = 0.4
+
 style.Colors[im.Col_WindowBg] = im.ImVec4(36/255, 42/255, 46/255, 1) --rgb(36, 42, 46)
 style.Colors[im.Col_MenuBarBg] = im.ImVec4(74/255, 78/255, 81/255, 1) --rgb(74, 78, 81)
 style.Colors[im.Col_TitleBg] = im.ImVec4(36/255, 42/255, 46/255, 1) --rgb(36, 42, 46)
@@ -51,18 +56,18 @@ style.Colors[im.Col_Tab] = im.ImVec4(23/255, 27/255, 30/255, 0.8) --rgb(23, 27, 
 
 local origStyle = im.ImGuiStyle()
 M.push = function()
-    ffi.copy(origStyle, im.GetStyle(), size_t)
-    ffi.copy(im.GetStyle(), style, size_t)
+  ffi.copy(origStyle, im.GetStyle(), size_t)
+  ffi.copy(im.GetStyle(), style, size_t)
 end
 M.pop = function()
-    ffi.copy(im.GetStyle(), origStyle, size_t)
+  ffi.copy(im.GetStyle(), origStyle, size_t)
 end
 
 setmetatable(M, {
-    __index = function(self, index)
-        local success, res = pcall(function() return style[index] end)
-        return success and res or nil
-    end,
-    __metatable = false
+  __index = function(self, index)
+    local success, res = pcall(function() return style[index] end)
+    return success and res or nil
+  end,
+  __metatable = false
 })
 return M

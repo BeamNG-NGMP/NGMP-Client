@@ -20,6 +20,8 @@ local function renderCheckbox(id, cats, translateCat)
   end
 end
 
+local modSizeTranslation = ngmp_ui_translate("ui.sidebar.tabs.settings.mod.totalsize", {totalGB = ngmp_modMgr.totalSizeGB})
+
 local tabs = {
   {
     name = ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.header"),
@@ -28,7 +30,7 @@ local tabs = {
 
       local vehTooltip = ngmp_settings.get("vehicleTooltips", {"ui", "generic"})
       do
-        if im.BeginCombo(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip"), vehicleTooltipsLookup[vehTooltip]) then
+        if im.BeginCombo("##"..ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip").txt, vehicleTooltipsLookup[vehTooltip].txt) then
           im.SetWindowFontScale(0.7)
           for i=0, 2 do
             if ngmp_ui.Selectable1(vehicleTooltipsLookup[i]) then
@@ -38,13 +40,15 @@ local tabs = {
           im.SetWindowFontScale(1)
           im.EndCombo()
         end
+        im.SameLine()
+        ngmp_ui.TextU(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip"))
       end
       if vehTooltip == 0 then
         renderCheckbox("fade", {"ui", "vehicleTooltip", "1"}, "userInterface.vehicleTooltip.")
         renderCheckbox("hideBehind", {"ui", "vehicleTooltip", "1"}, "userInterface.vehicleTooltip.")
       end
       im.Dummy(im.ImVec2(0,0))
-      im.Text(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.chat"))
+      ngmp_ui.TextU(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.chat"))
       im.Separator()
       renderCheckbox("alwaysSteamIDonHover", {"ui", "generic"}, "userInterface.")
     end,
@@ -55,7 +59,10 @@ local tabs = {
   {
     name = ngmp_ui_translate("ui.sidebar.tabs.settings.mod.header"),
     render = function()
-      im.Text(ngmp_ui_translate("ui.sidebar.tabs.settings.mod.totalsize", {totalGB = ngmp_modMgr.totalSizeGB}))
+      if modSizeTranslation.context.totalGB ~= ngmp_modMgr.totalSizeGB then
+        modSizeTranslation:update({totalGB = ngmp_modMgr.totalSizeGB})
+      end
+      ngmp_ui.TextU(modSizeTranslation)
       im.PushFont3("cairo_bold")
       ngmp_ui.primaryButton(ngmp_ui_translate("ui.sidebar.tabs.settings.mod.clear"), im.ImVec2(im.GetContentRegionAvailWidth(), im.GetTextLineHeightWithSpacing()*math.max(ngmp_modMgr.totalSizeGB or 1, 1)))
       im.PopFont()
@@ -71,8 +78,9 @@ local function renderTab(dt, tab, i)
   local style = im.GetStyle()
   if tab.extensionSmoother:get(tab.targetSize, dt) >= 0.5 then
     im.BeginChild1("SideBarSettingTab"..i.."##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(tab.extensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
+    im.PushTextWrapPos(im.GetContentRegionAvailWidth())
     im.SetWindowFontScale(1)
-    im.Text(tab.name)
+    ngmp_ui.TextU(tab.name)
     im.Separator()
     im.Dummy(im.ImVec2(0,0))
     tab.render()
@@ -80,6 +88,7 @@ local function renderTab(dt, tab, i)
       tab.targetSize = im.GetCursorPosY()+style.ItemSpacing.y+style.WindowPadding.y
     end
     tab.lastCursorPosY = im.GetCursorPosY()
+    im.PopTextWrapPos()
     im.EndChild()
   else
     im.Dummy(im.ImVec2(0,tab.extensionSmoother.state))

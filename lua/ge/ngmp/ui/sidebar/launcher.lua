@@ -12,10 +12,7 @@ local router
 local feedbackTargetSize = 1
 local feedbackExtensionSmoother = newTemporalSigmoidSmoothing(950, 750)
 
-local function centerText(text, centerX)
-  im.SetCursorPosX(centerX-im.CalcTextSize(text).x/2)
-  im.Text(text)
-end
+local networkErrText = ngmp_ui_translate("ui.sidebar.tabs.launcher.error", {err = ngmp_network.connection.err})
 
 local function render(dt)
   local style = im.GetStyle()
@@ -25,9 +22,9 @@ local function render(dt)
 
   im.SetWindowFontScale(1.75)
   im.PushFont3("cairo_regular_medium")
-  im.SetCursorPosX(center.x-im.CalcTextSize(ngmp_ui_translate("ui.sidebar.generic.fuckup")).x/2)
+  im.SetCursorPosX(center.x-im.CalcTextSize(ngmp_ui_translate("ui.sidebar.generic.fuckup").txt).x/2)
   im.SetCursorPosY(im.GetCursorPosY()-im.GetTextLineHeightWithSpacing()*1.8)
-  im.Text(ngmp_ui_translate("ui.sidebar.generic.fuckup"))
+  ngmp_ui.TextU(ngmp_ui_translate("ui.sidebar.generic.fuckup"))
   im.PopFont()
   im.SetWindowFontScale(1)
 
@@ -41,7 +38,7 @@ local function render(dt)
   end
 
   im.SetWindowFontScale(0.9)
-  centerText(ngmp_ui_translate("ui.sidebar.tabs.launcher.info"), center.x)
+  ngmp_ui.TextCentered(ngmp_ui_translate("ui.sidebar.tabs.launcher.info"), center.x)
   im.NewLine()
   local btnWidth = im.GetContentRegionAvailWidth()/2
   im.SetCursorPosX(center.x-btnWidth/2)
@@ -55,13 +52,16 @@ local function render(dt)
       im.SetCursorPosY(im.GetWindowHeight()-math.ceil(feedbackExtensionSmoother.state)-3)
       im.BeginChild1("ConnectionFeedback##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(feedbackExtensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
 
-      im.PushTextWrapPos(im.GetContentRegionAvailWidth())
-      im.Text(ngmp_ui_translate("ui.sidebar.tabs.launcher.report"))
+      ngmp_ui.TextU(ngmp_ui_translate("ui.sidebar.tabs.launcher.report"))
       im.Separator()
+      im.PushTextWrapPos(im.GetContentRegionAvailWidth())
       im.PushFont3("robotomono_regular")
       im.SetWindowFontScale(0.75)
-      im.Text(ngmp_network.connection.errType)
-      im.Text(ngmp_ui_translate("ui.sidebar.tabs.launcher.error", {err = ngmp_network.connection.err}))
+      ngmp_ui.TextU(ngmp_network.connection.errType)
+      if networkErrText.context.err ~= ngmp_network.connection.err then
+        networkErrText:update({err = ngmp_network.connection.err})
+      end
+      ngmp_ui.TextU(networkErrText)
       im.SetWindowFontScale(1)
       im.PopFont()
       im.PopTextWrapPos()

@@ -54,7 +54,7 @@ local function renderTabHeader(drawlist, pos3, pos4, windowWidth)
   if im.BeginTable("Sidebar Tabs##NGMPUI", #tabs, im.TableFlags_SizingStretchSame, im.ImVec2(windowWidth, 0)) then
     for i=1, #tabs do
       im.TableNextColumn()
-      local name = tabs[i].name
+      local name = tabs[i].name.txt or tabs[i].name
       local nameWidth = im.CalcTextSize(name).x
       im.SetCursorPosX(im.GetCursorPosX()+width/2-nameWidth/2)
       if currentTab == i then
@@ -128,9 +128,12 @@ local function onNGMPUI(dt)
 
     renderTabHeader(drawlist, pos3, pos4, windowWidth)
 
+    im.SetCursorPosX(im.GetCursorPosX())
     im.BeginChild1("Sidebar Content##NGMPUI", im.ImVec2(windowWidth - style.WindowPadding.x, windowHeight-im.GetCursorPosY()-5), false, im.WindowFlags_NoBackground+im.WindowFlags_NoScrollbar)
     if tabs[currentTab] then
+      im.PushTextWrapPos(im.GetContentRegionAvailWidth())
       tabs[currentTab].render(dt)
+      im.PopTextWrapPos()
     end
     im.EndChild()
 

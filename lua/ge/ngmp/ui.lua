@@ -101,6 +101,7 @@ end
 function M.primaryButton(string_label, ImVec2_size)
   if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
   if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
+  string_label = string_label.txt or string_label
   C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
   C.imgui_PushStyleColor1(im.Col_Button, M.bngCol32)
   local retVal = C.imgui_Button(string_label, ImVec2_size)
@@ -122,6 +123,7 @@ end
 function M.button(string_label, ImVec2_size)
   if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
   if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Button' cannot be nil, as the c type is 'const char *'") ; return end
+  string_label = string_label.txt or string_label
   C.imgui_PushStyleVar2(im.StyleVar_FramePadding, im.ImVec2(6,2))
   local retVal = C.imgui_Button(string_label, ImVec2_size)
   C.imgui_PopStyleVar(1)
@@ -141,6 +143,7 @@ end
 function M.checkbox(string_label, bool_v)
   if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Checkbox' cannot be nil, as the c type is 'const char *'") ; return end
   if bool_v == nil then log("E", "", "Parameter 'bool_v' of function 'Checkbox' cannot be nil, as the c type is 'bool *'") ; return end
+  string_label = string_label.txt or string_label
 
   local retVal = C.imgui_Checkbox(string_label, bool_v)
   if retVal then
@@ -154,6 +157,7 @@ function M.Selectable1(string_label, bool_selected, ImGuiSelectableFlags_flags, 
   if ImGuiSelectableFlags_flags == nil then ImGuiSelectableFlags_flags = 0 end
   if ImVec2_size == nil then ImVec2_size = im.ImVec2(0,0) end
   if string_label == nil then log("E", "", "Parameter 'string_label' of function 'Selectable1' cannot be nil, as the c type is 'const char *'") ; return end
+  string_label = string_label.txt or string_label
 
   local retVal = C.imgui_Selectable1(string_label, bool_selected, ImGuiSelectableFlags_flags, ImVec2_size)
   if retVal then
@@ -161,6 +165,35 @@ function M.Selectable1(string_label, bool_selected, ImGuiSelectableFlags_flags, 
   end
 
   return retVal
+end
+
+function M.TextU(string_text, string_text_end)
+  -- string_text_end is optional and can be nil
+  if string_text == nil then log("E", "", "Parameter 'string_text' of function 'TextUnformatted' cannot be nil, as the c type is 'const char *'") ; return end
+  C.imgui_TextUnformatted(string_text.txt or string_text, string_text_end and (string_text_end.txt or string_text_end))
+end
+
+function M.TextCentered(string_text, centerX)
+  if string_text == nil then log("E", "", "Parameter 'string_text' of function 'TextUnformatted' cannot be nil, as the c type is 'const char *'") ; return end
+  string_text = string_text.txt or string_text
+  centerX = centerX or im.GetContentRegionAvailWidth()/2
+  local fontWrapWidth = centerX*2
+
+  local textWidth = 0
+  repeat
+    textWidth = im.CalcTextSize(string_text).x
+    while textWidth > fontWrapWidth do
+      --TODO
+      break
+    end
+
+    im.SetCursorPosX(centerX-textWidth/2)
+    -- string_text_end is optional and can be nil
+    im.PushTextWrapPos(im.GetContentRegionAvailWidth())
+    C.imgui_TextUnformatted(string_text.txt or string_text, string_text_end)
+    im.PopTextWrapPos()
+    textWidth = 0
+  until textWidth == 0
 end
 
 local function ImRotate(v, cosA, sinA)
@@ -191,7 +224,7 @@ function M.ImageRotated(drawlist, texId, size, angle, uv1, uv2, uv3, uv4, color)
 end
 
 local function calculateButtonSize(text)
-  local textSize = im.CalcTextSize(text or "")
+  local textSize = im.CalcTextSize(text.txt or text or "")
   return im.ImVec2(textSize.x+6, textSize.y+2)
 end
 --
