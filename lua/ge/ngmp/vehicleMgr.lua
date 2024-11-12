@@ -90,6 +90,14 @@ local function deleteVehicle(data)
   end
 end
 
+local function resetVehicle(data)
+  local vehData = M.vehsByVehFullId[data.steam_id.."_"..data.vehicle_id]
+  if vehData then
+    local pos, rot = data.pos, data.rot
+    vehData[1]:setPosRot(pos[1], pos[2], pos[3], rot[1], rot[2], rot[3], rot.w[4])
+  end
+end
+
 local function onVehicleSpawned(objectId, veh)
   if dontSendSpawnInfo[veh:getName()] then
     local thisVeh = M.vehsByObjId[objectId]
@@ -145,11 +153,20 @@ local function onVehicleDestroyed(vid)
   if veh and veh[2] and veh[2].steamId == ngmp_playerData.steamId then
     local ownerData = M.owners[veh[2].steamId]
     local vehData = veh[2]
-    ngmp_network.sendPacket("VR", {data = {ownerData}})
+    ngmp_network.sendPacket("VD", {data = {ownerData}})
 
     M.vehsByVehFullId[vehData.vehFullId] = nil
     M.vehsByObjId[vehData.vehObjId] = nil
     ownerData[vehData.vehId] = nil
+  end
+end
+
+local function onVehicleResetted(vid)
+  local veh = M.vehsByObjId[vid]
+  if veh and veh[2] and veh[2].steamId == ngmp_playerData.steamId then
+    local ownerData = M.owners[veh[2].steamId]
+    local vehData = veh[2]
+    ngmp_network.sendPacket("VR", {data = {ownerData, veh:getPosition(), veh:getRotation()}})
   end
 end
 
@@ -192,7 +209,15 @@ local function onExtensionLoaded()
       vehicle_data = data,
     }, confirm_id
   end)
-  ngmp_network.registerPacketEncodeFunc("VR", function(ownerData)
+  ngmp_network.registerPacketEncodeFunc("VR", function(ownerData, pos, rot)
+    return {
+      pos = {pos.x, pos.y, pos.z},
+      rot = {rot.x, rot.y, rot.z, rot.w},
+      steam_id = ownerData.steamId,
+      vehicle_id = ownerData.vehId,
+    }
+  end)
+  ngmp_network.registerPacketEncodeFunc("VD", function(ownerData)
     return {
       steam_id = ownerData.steamId,
       vehicle_id = ownerData.vehId,
@@ -212,7 +237,7 @@ local function onExtensionLoaded()
       vehicle_id = ownerData.vehId,
     }
   end)
-  ngmp_network.registerPacketEncodeFunc("VD", function(ownerData, licenseText, paints)
+  ngmp_network.registerPacketEncodeFunc("VP", function(ownerData, licenseText, paints)
     return {
       steam_id = ownerData.steamId,
       display_data = {
@@ -225,7 +250,8 @@ local function onExtensionLoaded()
 
   ngmp_network.registerPacketDecodeFunc("VS", spawnVehicle)
   ngmp_network.registerPacketDecodeFunc("VA", confirmVehicle)
-  ngmp_network.registerPacketDecodeFunc("VR", deleteVehicle)
+  ngmp_network.registerPacketDecodeFunc("VR", resetVehicle)
+  ngmp_network.registerPacketDecodeFunc("VD", deleteVehicle)
   ngmp_network.registerPacketDecodeFunc("VU", function(data)
     setVehicleData(data.steam_id.."_"..data.vehicle_id, data.runtime_data)
   end)
@@ -266,5 +292,6 @@ M.spawnVehicle = spawnVehicle
 
 M.onVehicleSpawned = onVehicleSpawned
 M.onVehicleDestroyed = onVehicleDestroyed
+M.onVehicleResetted = onVehicleResetted
 
 return M
