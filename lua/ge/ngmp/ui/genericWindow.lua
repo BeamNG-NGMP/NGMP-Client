@@ -4,8 +4,6 @@ local C = {}
 local im = ui_imgui
 local imguiUtils = require('ui/imguiUtils')
 
-local windowSize = im.ImVec2(unpack(ngmp_settings.get("chatSize", {"ui","chat"})))
-
 local keyboardArrow
 local pin
 local unpin
@@ -23,7 +21,7 @@ end
 
 function C:render(dt, renderFunc)
   local style = im.GetStyle()
-  im.SetNextWindowBgAlpha(0.25)
+  im.SetNextWindowBgAlpha(self.transparency)
   im.Begin(self.name.."##NGMPUI", nil,
     im.WindowFlags_NoDocking+
     im.WindowFlags_NoScrollbar+
@@ -95,6 +93,8 @@ function C:init(name, translationId)
 
   self.maxSize = im.ImVec2(100,100)
   self.collapsedWidth = 100
+
+  self.transparency = ngmp_settings.get("windowTransparency", {"ui","generic"})
 
   -- these are shared variables: BeamNG caches them C++ -side so we can safely do this every window init
   keyboardArrow = FS:fileExists("/art/ngmpui/keyboard_arrow.png") and imguiUtils.texObj("/art/ngmpui/keyboard_arrow.png")

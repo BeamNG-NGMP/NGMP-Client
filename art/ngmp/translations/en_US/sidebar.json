@@ -63,9 +63,10 @@
 
   "ui.sidebar.tabs.settings.userInterface.vehicleTooltip.fade": "Fade Names by Distance",
   "ui.sidebar.tabs.settings.userInterface.vehicleTooltip.hideBehind": "Hide Names Behind Objects",
+  "ui.sidebar.tabs.settings.userInterface.vehicleTooltip.transparency": "Transparency",
 
-  "ui.sidebar.tabs.settings.userInterface.chat": "Chat",
   "ui.sidebar.tabs.settings.userInterface.alwaysSteamIDonHover": "Always show SteamID in user popup",
+  "ui.sidebar.tabs.settings.userInterface.windowTransparency": "Window Transparency",
 
   "ui.sidebar.tabs.settings.mod.header": "Mod Cache",
   "ui.sidebar.tabs.settings.mod.totalsize": "{totalGB:%.1f}GB used",

@@ -49,7 +49,9 @@ M.serverExtensionList = {
   "ngmp_vehicleMgr",
 
   -- ui stuff like chat, names
-  "ngmp_ui_nameRender"
+  "ngmp_ui_nameRender",
+  "ngmp_ui_chat",
+  "ngmp_ui_players",
 }
 
 local function setLogin(data)
@@ -134,6 +136,16 @@ local function onUpdate()
   end)
 
   ngmp_network.registerPacketDecodeFunc("LM", connect)
+  ngmp_network.registerPacketDecodeFunc("CM", function(data)
+    extensions.hook("onNGMPChatMessage", data.steam_id, require("mime").unb64(data.message))
+  end)
+
+  ngmp_network.registerPacketEncodeFunc("CM", function(string_message)
+    return {
+      steam_id = ngmp_playerData.steamId,
+      message = require("mime").b64(string_message)
+    }
+  end)
 
   -- startup after *all* modules are loaded
   extensions.hook("onNGMPInit")

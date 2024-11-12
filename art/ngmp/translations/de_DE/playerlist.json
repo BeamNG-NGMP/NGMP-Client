@@ -1,0 +1,8 @@
+{
+  "ui.playerlist.name": "Spieler",
+
+  "ui.playerlist.contact": "Direktnachricht",
+  "ui.playerlist.removeVeh": "Fahrzeug entfernen",
+  "ui.playerlist.respawnVeh": "Fahrzeug zurückholen",
+  "ui.playerlist.copysteam": "SteamID kopieren"
+}

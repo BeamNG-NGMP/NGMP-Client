@@ -6,6 +6,7 @@ local M = {
 }
 
 local im = ui_imgui
+local style = im.GetStyle()
 
 local vehicleTooltipsLookup = {
   [0] = ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip.0"),
@@ -20,6 +21,17 @@ local function renderCheckbox(id, cats, translateCat)
   end
 end
 
+local function renderSliderFloat(id, cats, translateCat, min, max, format)
+  local floatPtr = im.FloatPtr(ngmp_settings.get(id, cats))
+  local nameTxt = ngmp_ui_translate("ui.sidebar.tabs.settings."..translateCat..id).txt
+  im.SetNextItemWidth(im.GetContentRegionAvailWidth()-math.min(im.GetContentRegionAvailWidth()/2, im.CalcTextSize(nameTxt).x+style.ItemSpacing.x*2+style.WindowPadding.x))
+  if im.SliderFloat("##"..nameTxt, floatPtr, min, max, format, 0) then
+    ngmp_settings.set(id, floatPtr[0], cats)
+  end
+  im.SameLine()
+  ngmp_ui.TextU(nameTxt)
+end
+
 local modSizeTranslation = ngmp_ui_translate("ui.sidebar.tabs.settings.mod.totalsize", {totalGB = ngmp_modMgr.totalSizeGB})
 
 local tabs = {
@@ -27,9 +39,15 @@ local tabs = {
     name = ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.header"),
     render = function()
       renderCheckbox("closeOnLeftClickOutOfArea", {"ui", "sidebar"}, "userInterface.")
+      renderCheckbox("alwaysSteamIDonHover", {"ui", "generic"}, "userInterface.")
+      renderSliderFloat("windowTransparency", {"ui", "generic"}, "userInterface.", 0, 1, "%.1f")
 
+      im.NewLine()
+      ngmp_ui.TextU(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip"))
+      im.Separator()
       local vehTooltip = ngmp_settings.get("vehicleTooltips", {"ui", "generic"})
       do
+        im.SetNextItemWidth(im.CalcTextSize(vehicleTooltipsLookup[vehTooltip].txt).x+im.GetTextLineHeight()+style.FramePadding.x*4)
         if im.BeginCombo("##"..ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.vehicleTooltip").txt, vehicleTooltipsLookup[vehTooltip].txt) then
           im.SetWindowFontScale(0.7)
           for i=0, 2 do
@@ -46,11 +64,14 @@ local tabs = {
       if vehTooltip == 0 then
         renderCheckbox("fade", {"ui", "vehicleTooltip", "1"}, "userInterface.vehicleTooltip.")
         renderCheckbox("hideBehind", {"ui", "vehicleTooltip", "1"}, "userInterface.vehicleTooltip.")
+        renderSliderFloat("transparency", {"ui", "vehicleTooltip"}, "userInterface.vehicleTooltip.", 0, 1, "%.1f")
+      elseif vehTooltip == 1 then
+        renderSliderFloat("transparency", {"ui", "vehicleTooltip"}, "userInterface.vehicleTooltip.", 0, 1, "%.1f")
       end
-      im.Dummy(im.ImVec2(0,0))
-      ngmp_ui.TextU(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.chat"))
-      im.Separator()
-      renderCheckbox("alwaysSteamIDonHover", {"ui", "generic"}, "userInterface.")
+      --im.Dummy(im.ImVec2(0,0))
+      --ngmp_ui.TextU(ngmp_ui_translate("ui.sidebar.tabs.settings.userInterface.chat"))
+      --im.Separator()
+
     end,
     lastCursorPosY = 0,
     targetSize = 1,
@@ -75,7 +96,7 @@ local tabs = {
 
 local function renderTab(dt, tab, i)
   im.SetWindowFontScale(0.8)
-  local style = im.GetStyle()
+  style = im.GetStyle()
   if tab.extensionSmoother:get(tab.targetSize, dt) >= 0.5 then
     im.BeginChild1("SideBarSettingTab"..i.."##NGMPUI", im.ImVec2(im.GetContentRegionAvailWidth(), math.ceil(tab.extensionSmoother.state)), true, im.WindowFlags_NoScrollbar)
     im.PushTextWrapPos(im.GetContentRegionAvailWidth())

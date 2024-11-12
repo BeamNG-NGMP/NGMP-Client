@@ -1,11 +1,9 @@
 {
   "ui": {
-    "chat":{
-      "chatSize":[495, 240]
-    },
     "generic": {
       "alwaysSteamIDonHover": false,
-      "vehicleTooltips": 1
+      "vehicleTooltips": 1,
+      "windowTransparency": 0.33
     },
     "sidebar": {
       "closeOnLeftClickOutOfArea": true,
@@ -16,7 +14,8 @@
       "1": {
         "fade": true,
         "hideBehind": false
-      }
+      },
+      "transparency": 0.75
     }
   }
 }

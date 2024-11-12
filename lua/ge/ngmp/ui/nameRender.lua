@@ -15,6 +15,7 @@ local fadeStopDistance = 120
 local settingMode = 2
 local settingFade = false
 local settingHideBehind = false
+local settingTransparency = 1
 
 local nameRenderFuncs = {
   [0] = function(dt)
@@ -62,10 +63,12 @@ local nameRenderFuncs = {
     if mouseDownTimer > 0.2 then return end
 
     if mouseFocusedPlayerData then
+      im.SetNextWindowBgAlpha(settingTransparency)
       if im.BeginPopup(mouseFocusedPlayerPopupName) then
         ngmp_playerData.renderData(mouseFocusedPlayerData)
         im.EndPopup()
       end
+      im.SetNextWindowBgAlpha(1)
     end
 
     local mouseDown = im.IsMouseReleased(1)
@@ -101,6 +104,7 @@ local function onNGMPSettingsChanged()
   settingMode = ngmp_settings.get("vehicleTooltips", {"ui", "generic"})
   settingFade = ngmp_settings.get("fade", {"ui", "vehicleTooltip", "1"})
   settingHideBehind = ngmp_settings.get("hideBehind", {"ui", "vehicleTooltip", "1"})
+  settingTransparency = ngmp_settings.get("transparency", {"ui", "vehicleTooltip"})
 end
 
 local function onExtensionLoaded()
