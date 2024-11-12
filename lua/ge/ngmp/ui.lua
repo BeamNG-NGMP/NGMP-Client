@@ -229,7 +229,7 @@ local function calculateButtonSize(text)
 end
 --
 
-local function onUpdate(_, dtReal, dtSim, dtRaw)
+local function onUpdate(dtReal, dtSim, dtRaw)
   --timer:reset()
   local size = split(core_settings_graphic.selected_resolution, " ")
   mainSizePos[1] = im.ImVec2(tonumber(size[1]), tonumber(size[2]))
