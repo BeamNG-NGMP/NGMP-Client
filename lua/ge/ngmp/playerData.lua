@@ -5,6 +5,7 @@ local im = ui_imgui
 M.dependencies = {"ngmp_main", "ngmp_network", "ngmp_settings"}
 
 local ownData
+M.steamId = ""
 M.playerDataById = {}
 M.playerData = {}
 M.cacheDir = "/temp/ngmp_playercache/"
@@ -13,7 +14,9 @@ local convertQueue = {}
 local texObjs = {}
 local placeHolderTexObj = {}
 local downloadedAvatarThisFrame = false
+
 local settingAlwaysSteamIDonHover = false
+local settingTransparency = 1
 
 -- suffix is either nothing or "", "medium", or "full"
 local function getAvatar(avatarHash, suffix)
@@ -123,37 +126,59 @@ local function onUpdate(dt)
   end
 end
 
+local function stringDiff(str1,str2)
+  for i = #str1, 0, -1 do
+    if str1:sub(i,i) ~= str2:sub(i,i) then
+      return i
+    end
+  end
+  return #str1+1
+end
+
 local function set(rawData)
   rawData = rawData or {}
   local newData = {}
   M.playerData = newData
   M.playerDataById = {}
 
+  local names = {}
+
   local textColor = ColorF(1,1,1,1)
   local bgColor = ColorI(0,0,0,255)
   for _,v in ipairs(rawData.players) do
+    local existingPlayer = names[v.name]
+    if existingPlayer then
+      names[v.name] = nil
+      local existingId = existingPlayer.steamId
+      local newSteamId = (v.steamId or v.steam_id)
+      local diff = stringDiff(existingId, newSteamId)
+
+      existingPlayer.name = existingPlayer.name.." [."..existingPlayer.steamId:sub(diff, #existingPlayer.steamId).."]"
+      names[existingPlayer.name] = existingPlayer
+      v.name = v.name.." [."..(v.steamId or v.steam_id):sub(diff, #(v.steamId or v.steam_id)).."]"
+    end
+
+    --settingTransparency
     newData[#newData+1] = {
       name = v.name,
-      steamId = v.steam_id,
-      avatarHash = v.avatar_hash,
+      steamId = v.steamId or v.steam_id,
+      avatarHash = v.avatarHash or v.avatar_hash,
 
       -- these two are for debugDrawer::drawTextAdvanced(), in which:
       -- - Foreground is ColorF
       -- - Background is ColorI
       -- what the fuck? ...oh well, its beam
       -- defaults are defined above
-      nameColor = v.textColor and ColorF(v.textColor[1]/255, v.textColor[2]/255, v.textColor[3]/255) or textColor,
-      backgroundColor = v.bgColor and ColorI(v.bgColor[1], v.bgColor[2], v.bgColor[3]) or bgColor
+      nameColor = v.nameColor or (v.textColor and ColorF(v.textColor[1]/255, v.textColor[2]/255, v.textColor[3]/255) or textColor),
+      backgroundColor = v.backgroundColor or (v.bgColor and ColorI(v.bgColor[1], v.bgColor[2], v.bgColor[3]) or bgColor)
     }
-    M.playerDataById[v.steam_id] = newData[#newData]
+
+    names[v.name] = newData[#newData]
+    M.playerDataById[v.steam_id or v.steamId] = newData[#newData]
   end
 
   table.sort(newData, function(a,b)
-    if a.name == b.name then
-      return a.steamId < b.steamId
-    else
-      return a.name < b.name
-    end
+    return a.name < b.name
   end)
 end
 
@@ -170,6 +195,11 @@ end
 
 local function onNGMPSettingsChanged()
   settingAlwaysSteamIDonHover = ngmp_settings.get("alwaysSteamIDonHover", {"ui", "generic"})
+  settingTransparency = ngmp_settings.get("transparency", {"ui", "vehicleTooltip"})
+
+  for i=1, #M.playerData do
+    M.playerData[i].backgroundColor.a = settingTransparency*255
+  end
 end
 
 local function onExtensionLoaded()
@@ -196,7 +226,6 @@ end
 M.onNGMPLogin = onNGMPLogin
 
 M.onUpdate = onUpdate
-M.onNGMPUI = onNGMPUI
 M.onNGMPSettingsChanged = onNGMPSettingsChanged
 M.onExtensionLoaded = onExtensionLoaded
 
